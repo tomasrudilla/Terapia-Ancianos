@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { experiencias } from '../data/experiencias';
+import { experiencias } from '../experienciasData.js';
 
 export function Experiencias() {
   return (
