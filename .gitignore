@@ -1,0 +1,26 @@
+# Dependencias
+node_modules/
+client/node_modules/
+
+# Entorno y secretos
+.env
+.env.local
+.env.*.local
+
+# Build
+client/dist/
+
+# Local / demo
+data/*.db
+data/*.db-journal
+LINK-PUBLICO.txt
+tools/cloudflared
+.vercel
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
