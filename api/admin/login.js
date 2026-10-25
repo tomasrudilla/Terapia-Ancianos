@@ -1,5 +1,5 @@
-import { adminCredentialsValid, createAdminToken } from '../lib/auth.js';
-import { json, readJson } from '../lib/http.js';
+import { adminCredentialsValid, createAdminToken } from '../../lib/auth.js';
+import { json, readJson } from '../../lib/http.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Método no permitido' });

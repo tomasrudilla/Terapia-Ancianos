@@ -1,6 +1,6 @@
-import { withDb } from './lib/db.js';
-import { json, readJson } from './lib/http.js';
-import { getAvailability } from './lib/availability.js';
+import { withDb } from '../lib/db.js';
+import { json, readJson } from '../lib/http.js';
+import { getAvailability } from '../lib/availability.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Método no permitido' });

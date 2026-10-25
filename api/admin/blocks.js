@@ -1,7 +1,7 @@
-import { withDb } from '../lib/db.js';
-import { verifyAdmin } from '../lib/auth.js';
-import { json, readJson } from '../lib/http.js';
-import { timeToMinutes } from '../lib/availability.js';
+import { withDb } from '../../lib/db.js';
+import { verifyAdmin } from '../../lib/auth.js';
+import { json, readJson } from '../../lib/http.js';
+import { timeToMinutes } from '../../lib/availability.js';
 
 export default async function handler(req, res) {
   if (!(await verifyAdmin(req))) return json(res, 401, { error: 'No autorizado' });

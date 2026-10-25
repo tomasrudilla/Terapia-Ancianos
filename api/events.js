@@ -1,7 +1,7 @@
-import { withDb } from './lib/db.js';
-import { json } from './lib/http.js';
-import { getGroupEventsForDate, datesWithGroupEventsInMonth } from './lib/availability.js';
-import { getEventById } from './lib/events.js';
+import { withDb } from '../lib/db.js';
+import { json } from '../lib/http.js';
+import { getGroupEventsForDate, datesWithGroupEventsInMonth } from '../lib/availability.js';
+import { getEventById } from '../lib/events.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return json(res, 405, { error: 'Método no permitido' });

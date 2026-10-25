@@ -1,12 +1,12 @@
-import { withDb } from './lib/db.js';
-import { json } from './lib/http.js';
-import { WORK_DAYS } from './lib/config.js';
+import { withDb } from '../lib/db.js';
+import { json } from '../lib/http.js';
+import { WORK_DAYS } from '../lib/config.js';
 import {
   getAvailability,
   getDaysWithSlotsInMonth,
   getGroupEventsForDate,
   datesWithGroupEventsInMonth,
-} from './lib/availability.js';
+} from '../lib/availability.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return json(res, 405, { error: 'Método no permitido' });
