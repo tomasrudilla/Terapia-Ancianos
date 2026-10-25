@@ -1,9 +1,11 @@
 import { Outlet } from 'react-router-dom';
+import { HashScroll } from './HashScroll';
 import { Nav } from './Nav';
 
 export function Layout() {
   return (
     <>
+      <HashScroll />
       <Nav />
       <Outlet />
       <footer className="site-footer">

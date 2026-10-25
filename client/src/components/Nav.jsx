@@ -1,10 +1,34 @@
 import { useState, useEffect } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { homeSectionFromHash, scrollToHomeSection } from '../lib/scrollToSection';
 
 export function Nav() {
   const [open, setOpen] = useState(false);
   const [inicioOpen, setInicioOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const isHome = location.pathname === '/' || location.pathname === '/inicio';
+
+  const goHomeSection = (sectionId) => (e) => {
+    e.preventDefault();
+    setOpen(false);
+    setInicioOpen(false);
+
+    const hashPath = sectionId === 'portada' ? '/' : `/#${sectionId}`;
+
+    if (!isHome) {
+      navigate(hashPath);
+      return;
+    }
+
+    if (sectionId === 'portada') {
+      navigate('/', { replace: true });
+    } else {
+      navigate(hashPath, { replace: true });
+    }
+    scrollToHomeSection(sectionId);
+  };
 
   useEffect(() => {
     setOpen(false);
@@ -31,7 +55,7 @@ export function Nav() {
     return '';
   })();
 
-  const hashSection = location.hash.replace('#', '') || (location.pathname === '/' ? 'portada' : '');
+  const hashSection = isHome ? homeSectionFromHash(location.hash) : '';
 
   return (
     <header className="site-header">
@@ -55,16 +79,36 @@ export function Nav() {
               </button>
               <div className={`nav-dropdown-panel${inicioOpen ? ' is-open' : ''}`} hidden={!inicioOpen}>
                 <p className="nav-dropdown-eyebrow">Secciones del inicio</p>
-                <Link to="/#servicios" className={hashSection === 'servicios' ? 'is-active' : ''} role="menuitem">
+                <Link
+                  to="/#servicios"
+                  className={hashSection === 'servicios' ? 'is-active' : ''}
+                  role="menuitem"
+                  onClick={goHomeSection('servicios')}
+                >
                   Servicios
                 </Link>
-                <Link to="/#sobre-mi" className={hashSection === 'sobre-mi' ? 'is-active' : ''} role="menuitem">
+                <Link
+                  to="/#sobre-mi"
+                  className={hashSection === 'sobre-mi' ? 'is-active' : ''}
+                  role="menuitem"
+                  onClick={goHomeSection('sobre-mi')}
+                >
                   Sobre mí
                 </Link>
-                <Link to="/#contacto" className={hashSection === 'contacto' ? 'is-active' : ''} role="menuitem">
+                <Link
+                  to="/#contacto"
+                  className={hashSection === 'contacto' ? 'is-active' : ''}
+                  role="menuitem"
+                  onClick={goHomeSection('contacto')}
+                >
                   Contacto
                 </Link>
-                <Link to="/" className={`nav-dropdown-foot${hashSection === 'portada' ? ' is-active' : ''}`} role="menuitem">
+                <Link
+                  to="/"
+                  className={`nav-dropdown-foot${hashSection === 'portada' ? ' is-active' : ''}`}
+                  role="menuitem"
+                  onClick={goHomeSection('portada')}
+                >
                   Ver portada completa
                 </Link>
               </div>

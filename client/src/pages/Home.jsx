@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 export function Home() {
   return (
     <main>
-      <section className="hero">
+      <section className="hero" id="portada">
         <div className="container hero-grid">
           <div>
             <p className="hero-eyebrow">Terapia humanizada</p>
