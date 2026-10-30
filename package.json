@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix client\" \"vercel dev --listen 3001\"",
+    "dev": "npm run dev --prefix client",
+    "dev:local": "npx vercel dev --listen 3001",
     "dev:client": "npm run dev --prefix client",
     "build": "npm run build --prefix client",
     "preview": "npm run preview --prefix client"

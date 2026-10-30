@@ -22,6 +22,7 @@ export function Eventos() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
   const [form, setForm] = useState({ participant_name: '', participant_email: '', participant_phone: '' });
   const [alert, setAlert] = useState(null);
 
@@ -39,8 +40,15 @@ export function Eventos() {
   const selectDate = async (dateStr) => {
     setSelectedDate(dateStr);
     setSelectedEvent(null);
+    setSelectedTime(null);
     const data = await apiGet(`/api/events?date=${dateStr}`);
     setEvents(data.events || []);
+  };
+
+  const pickEventSlot = (ev) => {
+    if (ev.is_full) return;
+    setSelectedTime(ev.start_time);
+    setSelectedEvent(ev);
   };
 
   useEffect(() => {
@@ -53,6 +61,7 @@ export function Eventos() {
         setView(new Date(y, m - 1, 1));
         await selectDate(data.event.event_date);
         setSelectedEvent(data.event);
+        setSelectedTime(data.event.start_time);
       }
     })().catch(console.error);
   }, [params]);
@@ -68,6 +77,7 @@ export function Eventos() {
       setAlert({ type: 'success', msg: data.message });
       setForm({ participant_name: '', participant_email: '', participant_phone: '' });
       setSelectedEvent(null);
+      setSelectedTime(null);
       if (selectedDate) await selectDate(selectedDate);
     } catch (err) {
       setAlert({ type: 'error', msg: err.message });
@@ -78,7 +88,7 @@ export function Eventos() {
     <main>
       <div className="page-hero container">
         <h1>Eventos y talleres grupales</h1>
-        <p>Elegí un día con actividad, mirá quién ya se anotó y sumate al encuentro.</p>
+        <p>Elegí el día, el horario del encuentro y completá tu inscripción.</p>
       </div>
 
       <div className="container booking-layout">
@@ -96,21 +106,33 @@ export function Eventos() {
             <span className="legend-dot legend-event" /> Día con evento grupal
           </p>
           <div className="slots-section">
-            <h3>Eventos del día</h3>
+            <h3>Elegí el horario</h3>
             {!selectedDate && <p className="empty-slots">Seleccioná una fecha marcada en el calendario.</p>}
             {selectedDate && events.length === 0 && <p className="empty-slots">No hay eventos este día.</p>}
             {events.length > 0 && (
-              <div className="events-list">
-                {events.map((ev) => (
-                  <EventCard
-                    key={ev.id}
-                    event={ev}
-                    selectable
-                    selected={selectedEvent?.id === ev.id}
-                    onSelect={setSelectedEvent}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="slots-grid">
+                  {events.map((ev) => (
+                    <button
+                      key={ev.id}
+                      type="button"
+                      className={`slot-btn slot-btn-event${selectedEvent?.id === ev.id ? ' selected' : ''}`}
+                      disabled={ev.is_full}
+                      onClick={() => pickEventSlot(ev)}
+                    >
+                      <span>{ev.start_time}</span>
+                      <span className="slot-btn-hint">a {ev.end_time} hs</span>
+                    </button>
+                  ))}
+                </div>
+                {selectedEvent ? (
+                  <div className="events-list events-list-detail">
+                    <EventCard event={selectedEvent} selectable={false} />
+                  </div>
+                ) : (
+                  <p className="empty-slots">Elegí un horario para ver el evento e inscribirte.</p>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -119,9 +141,21 @@ export function Eventos() {
           <h3>Inscripción al evento</h3>
           {alert && <div className={`alert alert-${alert.type}`}>{alert.msg}</div>}
           <div className="form-summary">
-            <strong>Evento</strong>
-            <span>{selectedEvent ? fmtEventSummary(selectedEvent) : 'Elegí un evento de la lista'}</span>
+            <strong>Fecha y hora</strong>
+            <span>
+              {selectedEvent
+                ? fmtEventSummary(selectedEvent)
+                : selectedDate && !selectedTime
+                  ? 'Elegí un horario'
+                  : 'Elegí día y horario en el calendario'}
+            </span>
           </div>
+          {selectedEvent && (
+            <div className="form-summary">
+              <strong>Evento</strong>
+              <span>{selectedEvent.title}</span>
+            </div>
+          )}
           <form onSubmit={submit}>
             <div className="form-group">
               <label htmlFor="participant_name">Nombre completo *</label>

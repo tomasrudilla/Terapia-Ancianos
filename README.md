@@ -13,9 +13,8 @@ El código PHP anterior está en `legacy-php/` (ya no se usa en producción).
 ## Desarrollo local
 
 1. Creá `.env` desde `.env.example` con tu `DATABASE_URL` de Neon.
-2. Terminal A: `npx vercel dev --listen 3001`
-3. Terminal B: `cd client && npm run dev`
-4. Abrí http://localhost:5173
+2. `npm run dev:local` (o `npx vercel dev --listen 3001`)
+3. Abrí http://localhost:3001
 
 ## Publicar en Vercel
 

@@ -71,7 +71,7 @@ render_nav();
     <section class="section experiencias-cta">
         <div class="container experience-cta-box">
             <div>
-                <h2>¿Querés empezar tu propio proceso?</h2>
+                <h2>¿Querés empezar?</h2>
                 <p>Podés reservar una sesión individual o sumarte a un taller grupal cuando haya cupo.</p>
             </div>
             <div class="hero-actions">

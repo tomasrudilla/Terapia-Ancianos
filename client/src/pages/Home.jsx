@@ -6,10 +6,10 @@ export function Home() {
       <section className="hero" id="portada">
         <div className="container hero-grid">
           <div>
-            <p className="hero-eyebrow">Terapia humanizada</p>
-            <h1>Un espacio de calma para acompañar la vejez con dignidad</h1>
+            <p className="hero-eyebrow">Encuentros y contención</p>
+            <h1>Un espacio de encuentros y herramientas para vos que sos el familiar que cuida</h1>
             <p className="hero-lead">
-              Sesiones individuales pensadas para adultos mayores y sus familias: escucha, contención y herramientas
+              Sesiones individuales y grupales pensadas para armar una red de contención, escucha y herramientas
               concretas para el día a día.
             </p>
             <div className="hero-actions">
@@ -24,13 +24,18 @@ export function Home() {
           <div className="hero-visual">
             <div className="hero-card">
               <blockquote>
-                «Cada persona mayor tiene una historia única; mi trabajo es escucharla con tiempo y respeto.»
+                «Sé lo agotador que es cuando todo es nuevo y no sabés cómo reaccionar. Mi objetivo es escucharte con
+                tiempo y respeto para darte el alivio que necesitás en el día a día.»
               </blockquote>
-              <cite>— Lic. en Psicología · enfoque gerontológico</cite>
+              <cite>— Acompañante terapéutico · especialidad en gerontología</cite>
               <dl className="hero-stats">
                 <div>
-                  <dt>+10</dt>
-                  <dd>Años de experiencia</dd>
+                  <dt>Experiencia</dt>
+                  <dd>
+                    4 años en la dirección de discapacidad
+                    <br />
+                    6 años como acompañante terapéutico de adultos mayores.
+                  </dd>
                 </div>
                 <div>
                   <dt>100%</dt>
@@ -45,24 +50,42 @@ export function Home() {
       <section className="section section-alt" id="servicios">
         <div className="container">
           <header className="section-header">
-            <h2>Servicios</h2>
-            <p>Propuestas claras, en un ambiente tranquilo y accesible.</p>
+            <h2>Servicios:</h2>
           </header>
-          <div className="cards-grid">
+          <div className="cards-grid cards-grid-three">
+            <article className="card">
+              <div className="card-icon" aria-hidden="true">🏡</div>
+              <h3 className="card-title-compact">
+                Propuestas claras en un ambiente tranquilo y accesible
+              </h3>
+              <p>
+                Encuentros con calma para familiares y adultos mayores, en consultorio u online, con pasos claros y
+                respuestas a las dudas del día a día.
+              </p>
+            </article>
             <article className="card">
               <div className="card-icon" aria-hidden="true">🌿</div>
-              <h3>Terapia individual</h3>
-              <p>Sesiones de 60 minutos para trabajar emociones, adaptación al cambio, duelos y vínculos familiares.</p>
+              <h3>Acompañamiento Familiar</h3>
+              <p>
+                Para trabajar las emociones, adaptarnos al cambio, vínculos, como aprender a desarrollar las
+                herramientas.
+              </p>
             </article>
             <article className="card">
-              <div className="card-icon" aria-hidden="true">🤝</div>
-              <h3>Acompañamiento familiar</h3>
-              <p>Orientación a cuidadores y familiares sobre comunicación, límites y autocuidado.</p>
-            </article>
-            <article className="card">
-              <div className="card-icon" aria-hidden="true">🧘</div>
-              <h3>Talleres y encuentros</h3>
-              <p>Actividades grupales de memoria, relajación y socialización (consultar calendario de eventos).</p>
+              <div className="card-icon" aria-hidden="true">📋</div>
+              <h3>Modalidad que vos vas a elegir</h3>
+              <ul className="card-modalidad-list">
+                <li>
+                  <strong>Individual</strong>
+                  <br />
+                  1 hora
+                </li>
+                <li>
+                  <strong>Grupal</strong>
+                  <br />
+                  2 horas
+                </li>
+              </ul>
             </article>
           </div>
         </div>
@@ -72,20 +95,22 @@ export function Home() {
         <div className="container about-grid">
           <div className="about-image" role="img" aria-label="Espacio terapéutico cálido y luminoso" />
           <div className="about-content">
-            <h2>Sobre mí</h2>
+            <h2>Sobre mí...</h2>
             <p>
-              Soy psicóloga especializada en adultos mayores. Trabajo desde un enfoque integrador, combinando escucha
-              clínica, psicoeducación y recursos prácticos para mejorar la calidad de vida.
+              En los años trabajados para Discapacidad más la experiencia como Acompañante Terapéutica, siempre mi
+              pregunta era ¿quién cuida y guía a los familiares? ¿Quién los contiene? Me llenan de preguntas, que no
+              saben cómo actuar o qué hacer con su familiar.
             </p>
             <p>
-              El consultorio está preparado para personas con movilidad reducida. También ofrezco modalidad online para
-              quienes prefieren atención desde casa.
+              Ahí decidí armar estas charlas, que les van a servir para aprender nuevamente a conectar con su ser
+              querido.
             </p>
-            <ul className="list-check">
-              <li>Primera consulta sin compromiso (30 min)</li>
-              <li>Horarios de lunes a viernes, 9 a 18 hs</li>
-              <li>Reserva online con confirmación inmediata</li>
-            </ul>
+            <p>A generar recuerdos nuevos.</p>
+            <p>Que no están solos.</p>
+            <p>Que hay que romper con los patrones de que todo lo pueden hacer solos.</p>
+            <p>Este espacio es para ellos.</p>
+            <p>Entre ellos y yo vamos a formar comunidades para ir para adelante.</p>
+            <p>Van a aprender a encontrar EL DÍA GANADO</p>
           </div>
         </div>
       </section>
@@ -93,10 +118,10 @@ export function Home() {
       <section className="section experiencias-teaser">
         <div className="container experiencias-teaser-inner">
           <div>
-            <h2>Experiencias de quienes pasaron por acá</h2>
+            <h2>Experiencias de familiares</h2>
             <p>
-              Conocé historias de adultos mayores: qué les preocupaba, qué tratamiento o taller recibieron y cómo se
-              sintieron en el proceso.
+              Leé testimonios de quienes participaron de charlas y acompañamiento: palabras reales de familias que
+              transitaron el camino junto a Romina.
             </p>
           </div>
           <Link to="/experiencias" className="btn btn-primary">
@@ -113,31 +138,17 @@ export function Home() {
           </header>
           <div className="contact-box">
             <div className="contact-item">
-              <span aria-hidden="true">📍</span>
-              <div>
-                <strong>Consultorio</strong>
-                <span>
-                  Av. Corrientes 1234, CABA
-                  <br />
-                  Planta baja · acceso sin escaleras
-                </span>
-              </div>
-            </div>
-            <div className="contact-item">
-              <span aria-hidden="true">✉️</span>
-              <div>
-                <strong>Email</strong>
-                <span>
-                  <a href="mailto:contacto@espaciocalma.com">contacto@espaciocalma.com</a>
-                </span>
-              </div>
-            </div>
-            <div className="contact-item">
               <span aria-hidden="true">📞</span>
               <div>
                 <strong>Teléfono</strong>
                 <span>
-                  <a href="tel:+541112345678">+54 11 1234-5678</a>
+                  <a
+                    href="https://wa.me/541140224577"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    +54 11 4022-4577
+                  </a>
                 </span>
               </div>
             </div>

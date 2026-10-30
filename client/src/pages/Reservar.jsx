@@ -35,7 +35,13 @@ export function Reservar() {
   }, [monthKey]);
 
   useEffect(() => {
-    loadMonth().catch(console.error);
+    loadMonth().catch((err) => {
+      console.error(err);
+      setAlert({
+        type: 'error',
+        msg: 'No se pudo cargar el calendario. ¿Está la API en marcha? (vercel dev en local o deploy en producción)',
+      });
+    });
   }, [loadMonth]);
 
   const selectDate = async (dateStr) => {
@@ -46,6 +52,11 @@ export function Reservar() {
       const data = await apiGet(`/api/slots?date=${dateStr}`);
       setSlots(data.slots || []);
       setEvents(data.events || []);
+      setAlert(null);
+    } catch (err) {
+      setSlots([]);
+      setEvents([]);
+      setAlert({ type: 'error', msg: err.message || 'No se pudieron cargar los horarios' });
     } finally {
       setLoading(false);
     }
@@ -79,6 +90,7 @@ export function Reservar() {
 
       <div className="container booking-layout">
         <div className="calendar-panel">
+          {alert && <div className={`alert alert-${alert.type}`}>{alert.msg}</div>}
           <MonthCalendar
             view={view}
             onPrev={() => setView(new Date(view.getFullYear(), view.getMonth() - 1, 1))}

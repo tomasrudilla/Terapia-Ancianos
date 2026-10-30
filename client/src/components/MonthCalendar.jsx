@@ -25,11 +25,6 @@ export function MonthCalendar({
   const firstDow = (new Date(year, month, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const dayHasActivity = (dateStr) => {
-    if (eventsOnly) return daysWithEvents.has(dateStr);
-    return daysWithSlots.has(dateStr) || daysWithEvents.has(dateStr);
-  };
-
   const cells = [];
   for (let i = 0; i < firstDow; i++) {
     cells.push(<span key={`e-${i}`} className="cal-day other-month" aria-hidden="true" />);
@@ -39,8 +34,10 @@ export function MonthCalendar({
     const dateStr = fmtDate(year, month, day);
     const dow = new Date(year, month, day).getDay() || 7;
     const isPast = dateStr < todayStr;
-    const active = dayHasActivity(dateStr);
-    const disabled = isPast || (eventsOnly ? !daysWithEvents.has(dateStr) : !active || !WORK_DAYS.includes(dow));
+    const disabled =
+      isPast ||
+      !WORK_DAYS.includes(dow) ||
+      (eventsOnly && !daysWithEvents.has(dateStr));
 
     const cls = [
       'cal-day',

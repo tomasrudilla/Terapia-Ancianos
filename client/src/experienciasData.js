@@ -1,72 +1,54 @@
 export const experiencias = [
   {
-    slug: 'elena-ruiz',
-    name: 'Elena Ruiz',
-    age: 78,
-    location: 'Palermo, CABA',
-    service: 'Terapia individual y taller grupal de memoria',
-    duration: '8 meses de acompañamiento',
-    summary: 'Ansiedad tras mudarse con su hija y dificultad para dormir.',
-    story:
-      'Elena llegó después de dejar su departamento de toda la vida. Trabajamos rutinas de sueño, ejercicios de respiración y la elaboración del duelo por su espacio. Además participó del taller de memoria, donde reconectó con recuerdos agradables y ganó confianza para socializar.',
-    quote: 'Volví a sentir que tengo algo para contar. Duermo mejor y me animé a salir sola al parque.',
-    image: '/assets/img/experiencias/elena.jpg',
-    imageAlt: 'Elena Ruiz, 78 años, sonriendo en un entorno luminoso',
+    slug: 'adriana-esther',
+    name: 'Adriana, hija de Esther',
+    text: `Romina fue mucho más que una acompañante terapéutica de mi mamá. Con el tiempo construimos un vínculo muy especial, basado en el cariño, la confianza y el respeto. Me brindó contención en momentos difíciles, me acompañó desde el corazón y me dio herramientas que me ayudaron a transitar situaciones complejas con más fortaleza y serenidad.
+
+Su calidad humana, su sensibilidad y su manera de estar presente dejaron una huella enorme en mi vida. Agradezco profundamente haberla conocido y que siempre voy a guardar un cariño inmenso por todo lo que significó para mi mamá y para mí.
+
+Hay personas que llegan a nuestras vidas por una circunstancia y terminan ocupando un lugar en el corazón para siempre. Ella es una de esas personas.`,
   },
   {
-    slug: 'jorge-perez',
-    name: 'Jorge Pérez',
-    age: 82,
-    location: 'Flores, CABA',
-    service: 'Terapia individual presencial',
-    duration: '6 meses',
-    summary: 'Duelo por la pérdida de su esposa y sensación de vacío.',
-    story:
-      'Jorge acudió recomendado por su médico de cabecera. En sesión semanal exploramos su historia de pareja, ritualizamos pequeños homenajes y reconstruimos actividades con sentido (ajedrez, caminatas cortas). Involucramos a su nieta en una sesión de orientación familiar.',
-    quote: 'No es que deje de extrañarla, pero ya no me siento perdido todo el día.',
-    image: '/assets/img/experiencias/jorge.jpg',
-    imageAlt: 'Jorge Pérez, 82 años, retrato con sonrisa',
+    slug: 'familia-acompanamiento',
+    name: 'Anónimo',
+    text: `Los logros obtenidos con mi mamá superan los objetivos planteados con tu trabajo. Realizás mucho más que estimulación cognitiva y física. Acompañás desde la reflexión y, sobre todo, desde la diversión y la alegría.
+
+Asistís a tu acompañante y también a su familia, de una manera comprometida y con amor. Gracias, Romi. Sin vos sería imposible para nosotros.`,
   },
   {
-    slug: 'carmen-vidal',
-    name: 'Carmen Vidal',
-    age: 74,
-    location: 'Online desde Mendoza',
-    service: 'Terapia individual online',
-    duration: '4 meses',
-    summary: 'Miedo a caerse y evitación de salir de casa.',
-    story:
-      'Por distancia elegimos modalidad virtual. Psicoeducación sobre ansiedad, plan gradual de exposición (primero balcón, luego cuadra) y coordinación con kinesiología. Sus hijos recibieron pautas para acompañar sin sobreproteger.',
-    quote: 'Pude ir al kiosco de la esquina sola. Para mí eso fue un montón.',
-    image: '/assets/img/experiencias/carmen.jpg',
-    imageAlt: 'Carmen Vidal, 74 años, retrato sonriente',
+    slug: 'valeria-baudi',
+    name: 'Valeria Baudi',
+    text: `Un gracias es poco en comparación a lo que nos acompañaste, nos guiaste y fuiste nuestro sostén: nuestra Romi, acompañante terapéutica de mi mamá pero de todos, como nos enseñaste. A seguir… espero que muchas familias te encuentren en el camino de la vida. Día ganado. Que sí a la vida.
+
+Es una excelente profesional, con ese plus de amor y contención que se necesita para este duro proceso.`,
   },
   {
-    slug: 'rosa-mendez',
-    name: 'Rosa Méndez',
-    age: 69,
-    location: 'Villa Crespo, CABA',
-    service: 'Encuentro grupal «Vínculos y familia»',
-    duration: 'Taller de 8 encuentros',
-    summary: 'Conflictos frecuentes con adultos hijos por decisiones de salud.',
-    story:
-      'Rosa participó del ciclo grupal. Aprendió escucha activa y límites claros. Role-playing de conversaciones difíciles y tarea entre sesiones para acordar con su hijo un calendario de visitas y responsabilidades médicas.',
-    quote: 'Ahora hablamos sin gritar. Me siento escuchada y respetada.',
-    image: '/assets/img/experiencias/rosa.jpg',
-    imageAlt: 'Rosa Méndez, 69 años, retrato cercano sonriendo',
+    slug: 'ale-heredia',
+    name: 'Ale Heredia',
+    text: `Gracias, Romi. Qué lindo: fuiste clave en nuestras vidas, llegaste cuando tenías que llegar y mi vieja te adora, porque sos de todo un poco, más allá de tu profesionalismo.`,
   },
   {
-    slug: 'antonio-sosa',
-    name: 'Antonio Sosa',
-    age: 85,
-    location: 'Caballito, CABA',
-    service: 'Terapia individual + orientación a cuidador',
-    duration: '1 año',
-    summary: 'Depresión leve y bajo ánimo tras jubilación forzada por salud.',
-    story:
-      'Antonio y su hija cuidadora asistieron a sesiones alternadas. Reactivamos hobbies (carpintería en escala), grupo de ajedrez en el barrio y revisión de medicación con su psiquiatra. Monitoreo de ánimo con escala simple semanal.',
-    quote: 'Volví a tener ganas de levantarme temprano. Mi taller otra vez tiene proyectos.',
-    image: '/assets/img/experiencias/antonio.jpg',
-    imageAlt: 'Antonio Sosa, 85 años, retrato con barba canosa',
+    slug: 'silvia',
+    name: 'Silvia',
+    text: `Es hermoso. Me llega tan profundo, tan en el alma. Sos parte —siento— de nuestra vida, Romi. Nuestra acompañante. Qué tan atinado el nombre… Acompañante.
+
+Tenés que seguir siendo parte tan importante de la vida de las familias. Es fundamental para poder transitar más liviano todo.`,
+  },
+  {
+    slug: 'charla-villegas-cognitivo',
+    name: 'Anónimo',
+    text: `Asistí a la charla que diste en el Villegas para el acompañamiento de familiares con deterioro cognitivo y te pude consultar en otras oportunidades. Estoy súper agradecida por toda la ayuda que me ofreciste: fue de mucha ayuda. Infinitamente agradecida por todos los consejos.`,
+  },
+  {
+    slug: 'parkinson-demencia',
+    name: 'Anónimo',
+    text: `Mil gracias por toda la información que recibimos con el asesoramiento para manejarnos en familia con nuestro familiar con Parkinson y demencia. Estamos totalmente agradecidos por todo lo aprendido.`,
+  },
+  {
+    slug: 'reunion-club-villegas',
+    name: 'Anónimo',
+    text: `Asistimos con mi mamá, hermana y mis cuñadas a la reunión con Romina en el club Villegas. Una experiencia super recomendable que ayudó muchísimo a acompañar a mi papá con una enfermedad neurocognitiva. Si bien el camino es difícil, ella nos ayudó muchísimo con cosas que son complicadas y uno, en tanto, ya no sabe qué hacer.
+
+Me encantaría volver a todas las que hace. Una genia total, super empática, y cada palabra me queda grabada. Gracias infinitas por tanto: a veces unas horas parecen poco, pero es muchísimo.`,
   },
 ];

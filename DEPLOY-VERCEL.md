@@ -50,21 +50,16 @@ URLs:
 
 ## 4. Desarrollo local
 
-Terminal 1 — API (necesitás `DATABASE_URL` en `.env`):
+Una sola terminal (React + API; necesitás `DATABASE_URL` en `.env`):
 
 ```bash
 npm install
-echo 'DATABASE_URL=postgres://...' > .env
-npx vercel dev --listen 3001
+cp .env.example .env
+# Editá .env y pegá DATABASE_URL de Neon
+npm run dev:local
 ```
 
-Terminal 2 — React:
-
-```bash
-cd client && npm install && npm run dev
-```
-
-Abrí `http://localhost:5173` (el proxy manda `/api` al puerto 3001).
+Abrí **http://localhost:3001** (Vite y `/api` juntos). No uses `npm run dev` en la raíz dentro de otro `vercel dev` (provoca error recursivo).
 
 ---
 
