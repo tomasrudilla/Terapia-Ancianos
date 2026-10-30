@@ -36,6 +36,11 @@ export function Nav() {
   }, [location.pathname]);
 
   useEffect(() => {
+    document.body.classList.toggle('nav-open', open);
+    return () => document.body.classList.remove('nav-open');
+  }, [open]);
+
+  useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') {
         setOpen(false);
