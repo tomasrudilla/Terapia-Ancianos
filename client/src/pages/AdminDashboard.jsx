@@ -213,10 +213,7 @@ export function AdminDashboard() {
               </div>
             </div>
             <div className="admin-header-actions">
-              <Link to="/" className="btn btn-secondary btn-small">
-                Ver sitio
-              </Link>
-              <button type="button" className="btn btn-ghost btn-small admin-btn-logout" onClick={logout}>
+              <button type="button" className="btn btn-secondary btn-small admin-btn-logout" onClick={logout}>
                 Salir
               </button>
             </div>
@@ -250,12 +247,11 @@ export function AdminDashboard() {
               </button>
             </div>
           )}
-          {loading && <p className="admin-loading">Cargando datos desde la base…</p>}
+          {loading && <p className="admin-loading">Cargando…</p>}
 
           {tab === 'overview' && (
             <div className="admin-card">
               <h2>Resumen</h2>
-              <p className="admin-lead">Totales en tiempo real desde Neon.</p>
               <div className="admin-stats">
                 <div className="admin-stat">
                   <span className="admin-stat-value">{overviewStats?.bookings_confirmed ?? '—'}</span>
@@ -291,7 +287,7 @@ export function AdminDashboard() {
           {tab === 'bookings' && (
             <div className="admin-card">
               <h2>Reservas de sesión individual</h2>
-              <p className="admin-lead">Elegí un día en el calendario para ver turnos reservados (desde la base de datos).</p>
+              <p className="admin-lead">Elegí un día en el calendario para ver los turnos reservados.</p>
               <div className="admin-calendar-layout">
                 <div className="calendar-panel admin-calendar-panel">
                   <MonthCalendar
@@ -363,7 +359,7 @@ export function AdminDashboard() {
           {tab === 'registrations' && (
             <div className="admin-card">
               <h2>Inscripciones a eventos grupales</h2>
-              <p className="admin-lead">Días con eventos que tienen inscriptos (datos en Neon).</p>
+              <p className="admin-lead">Elegí un día para ver las inscripciones a eventos grupales.</p>
               <div className="admin-calendar-layout">
                 <div className="calendar-panel admin-calendar-panel">
                   <MonthCalendar
@@ -465,7 +461,7 @@ export function AdminDashboard() {
                 </button>
               </form>
 
-              <h3 className="admin-subtitle">Eventos en la base ({events.length})</h3>
+              <h3 className="admin-subtitle">Listado de eventos</h3>
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
@@ -566,7 +562,7 @@ export function AdminDashboard() {
                 </button>
               </form>
 
-              <h3 className="admin-subtitle">Bloqueos en la base ({blocks.length})</h3>
+              <h3 className="admin-subtitle">Bloqueos activos</h3>
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
