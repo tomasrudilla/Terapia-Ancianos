@@ -64,6 +64,21 @@ export async function apiGet(path) {
   return parseApiResponse(res);
 }
 
+export async function apiGetAdmin(path) {
+  const token = getAdminToken();
+  let res;
+  try {
+    res = await fetchWithTimeout(path, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch {
+    throw new Error(
+      'No hay conexión con la API. En local: npx vercel dev --listen 3001 y DATABASE_URL en .env',
+    );
+  }
+  return parseApiResponse(res);
+}
+
 export async function apiPost(path, body, admin = false) {
   const headers = { 'Content-Type': 'application/json' };
   if (admin) {

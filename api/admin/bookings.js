@@ -7,12 +7,22 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const from = req.query?.from || new Date().toISOString().slice(0, 8) + '01';
-      const to = req.query?.to || new Date().toISOString().slice(0, 10);
-      const bookings = await withDb((sql) => sql`
-        SELECT * FROM bookings WHERE booking_date BETWEEN ${from} AND ${to}
-        ORDER BY booking_date, booking_time
-      `);
+      const all = req.query?.all === '1' || req.query?.all === 'true';
+      let bookings;
+      if (all) {
+        bookings = await withDb((sql) => sql`
+          SELECT * FROM bookings
+          ORDER BY booking_date DESC, booking_time DESC
+          LIMIT 500
+        `);
+      } else {
+        const from = req.query?.from || new Date().toISOString().slice(0, 8) + '01';
+        const to = req.query?.to || new Date().toISOString().slice(0, 10);
+        bookings = await withDb((sql) => sql`
+          SELECT * FROM bookings WHERE booking_date BETWEEN ${from} AND ${to}
+          ORDER BY booking_date DESC, booking_time DESC
+        `);
+      }
       return json(res, 200, { bookings });
     }
 

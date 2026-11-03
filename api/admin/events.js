@@ -1,7 +1,7 @@
 import { withDb } from '../../lib/db.js';
 import { verifyAdmin } from '../../lib/auth.js';
 import { json, readJson } from '../../lib/http.js';
-import { enrichEvent } from '../../lib/events.js';
+import { enrichEventAdmin } from '../../lib/events.js';
 import { timeToMinutes } from '../../lib/availability.js';
 
 export default async function handler(req, res) {
@@ -9,16 +9,26 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const from = req.query?.from || new Date().toISOString().slice(0, 8) + '01';
-      const to = req.query?.to || new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10);
-      const rows = await withDb((sql) => sql`
-        SELECT * FROM events WHERE event_date BETWEEN ${from} AND ${to}
-        ORDER BY event_date, start_time
-      `);
+      const all = req.query?.all === '1' || req.query?.all === 'true';
+      const rows = await withDb((sql) => {
+        if (all) {
+          return sql`
+            SELECT * FROM events
+            ORDER BY event_date DESC, start_time DESC
+            LIMIT 200
+          `;
+        }
+        const from = req.query?.from || new Date().toISOString().slice(0, 8) + '01';
+        const to = req.query?.to || new Date(Date.now() + 180 * 864e5).toISOString().slice(0, 10);
+        return sql`
+          SELECT * FROM events WHERE event_date BETWEEN ${from} AND ${to}
+          ORDER BY event_date DESC, start_time DESC
+        `;
+      });
       const events = await withDb(async (sql) => {
         const out = [];
         for (const ev of rows) {
-          out.push(ev.event_type === 'event' ? await enrichEvent(sql, ev) : ev);
+          out.push(ev.event_type === 'event' ? await enrichEventAdmin(sql, ev) : ev);
         }
         return out;
       });
