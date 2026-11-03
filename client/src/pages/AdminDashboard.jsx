@@ -45,15 +45,6 @@ function AdminMobileNav({ tab, open, onToggle, onSelect }) {
 
   return (
     <nav className={`admin-mobile-menu${open ? ' is-open' : ''}`} aria-label="Secciones del panel">
-      {open ? (
-        <button
-          type="button"
-          className="admin-mobile-menu-backdrop"
-          aria-label="Cerrar menú"
-          tabIndex={-1}
-          onClick={onToggle}
-        />
-      ) : null}
       <button
         type="button"
         className="admin-mobile-menu-trigger"
