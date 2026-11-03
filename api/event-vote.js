@@ -1,6 +1,7 @@
 import { withDb } from '../lib/db.js';
 import { json, readJson } from '../lib/http.js';
 import { addEventVote } from '../lib/events.js';
+import { sendEventVoteEmails } from '../lib/mail.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Método no permitido' });
@@ -24,9 +25,20 @@ export default async function handler(req, res) {
       return json(res, 409, { error: 'Ya registraste tu voto para este evento con ese email' });
     }
 
+    try {
+      await sendEventVoteEmails({
+        voter_name,
+        voter_email,
+        event: result.event,
+        vote_count: result.vote_count,
+      });
+    } catch (mailErr) {
+      console.error('[event-vote] email', mailErr);
+    }
+
     return json(res, 200, {
       ok: true,
-      message: '¡Gracias! Tu voto quedó registrado.',
+      message: '¡Gracias! Tu voto quedó registrado. Te enviamos un correo de confirmación.',
       vote_count: result.vote_count,
     });
   } catch (e) {
