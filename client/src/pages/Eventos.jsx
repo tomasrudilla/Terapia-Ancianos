@@ -75,7 +75,15 @@ export function Eventos() {
         {alert && !votingFor && <div className={`alert alert-${alert.type}`}>{alert.msg}</div>}
         {loading && <p className="events-poll-loading">Cargando propuestas…</p>}
         {!loading && events.length === 0 && (
-          <p className="empty-slots">Todavía no hay eventos grupales publicados. Volvé pronto.</p>
+          <div className="events-poll-empty" role="status">
+            <div className="events-poll-notice">
+              <span className="events-poll-notice-icon" aria-hidden="true">
+                !
+              </span>
+              <p className="events-poll-notice-title">Atención</p>
+              <p className="events-poll-notice-text">Todavía no hay eventos grupales publicados. Volvé pronto.</p>
+            </div>
+          </div>
         )}
 
         <ol className="events-poll-list">
