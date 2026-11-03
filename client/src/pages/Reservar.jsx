@@ -3,6 +3,33 @@ import { MonthCalendar } from '../components/MonthCalendar';
 import { EventCard } from '../components/EventCard';
 import { apiGet, apiPost } from '../api';
 
+function BookingSuccessModal({ message, detail, onClose }) {
+  if (!message) return null;
+
+  return (
+    <div className="admin-modal-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="admin-modal booking-success-modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="booking-success-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="booking-success-title" className="admin-modal-title">
+          Reserva confirmada
+        </h3>
+        <p className="admin-modal-text">{message}</p>
+        {detail ? <p className="booking-success-detail">{detail}</p> : null}
+        <div className="admin-modal-actions">
+          <button type="button" className="btn btn-primary" onClick={onClose}>
+            Entendido
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function fmtDisplay(dateStr, timeStr) {
   const [y, m, day] = dateStr.split('-').map(Number);
   const dt = new Date(y, m - 1, day);
@@ -24,6 +51,7 @@ export function Reservar() {
   const [selectedTime, setSelectedTime] = useState(null);
   const [form, setForm] = useState({ client_name: '', client_email: '', client_phone: '', notes: '' });
   const [alert, setAlert] = useState(null);
+  const [successModal, setSuccessModal] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const monthKey = `${view.getFullYear()}-${String(view.getMonth() + 1).padStart(2, '0')}`;
@@ -33,6 +61,15 @@ export function Reservar() {
     setDaysWithSlots(new Set(data.days_with_slots || []));
     setDaysWithEvents(new Set(data.days_with_events || []));
   }, [monthKey]);
+
+  useEffect(() => {
+    if (!successModal) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setSuccessModal(null);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [successModal]);
 
   useEffect(() => {
     loadMonth().catch((err) => {
@@ -71,7 +108,12 @@ export function Reservar() {
         time: selectedTime,
         ...form,
       });
-      setAlert({ type: 'success', msg: data.message });
+      setAlert(null);
+      setSuccessModal({
+        message: data.message || '¡Reserva confirmada! Te enviamos la confirmación por email.',
+        detail:
+          selectedDate && selectedTime ? fmtDisplay(selectedDate, selectedTime) : null,
+      });
       setForm({ client_name: '', client_email: '', client_phone: '', notes: '' });
       setSelectedTime(null);
       await loadMonth();
@@ -90,7 +132,7 @@ export function Reservar() {
 
       <div className="container booking-layout">
         <div className="calendar-panel">
-          {alert && <div className={`alert alert-${alert.type}`}>{alert.msg}</div>}
+          {alert?.type === 'error' && <div className="alert alert-error">{alert.msg}</div>}
           <MonthCalendar
             view={view}
             onPrev={() => setView(new Date(view.getFullYear(), view.getMonth() - 1, 1))}
@@ -146,7 +188,7 @@ export function Reservar() {
 
         <aside className="form-panel">
           <h3>Tus datos</h3>
-          {alert && <div className={`alert alert-${alert.type}`}>{alert.msg}</div>}
+          {alert?.type === 'error' && <div className="alert alert-error">{alert.msg}</div>}
           <div className="form-summary">
             <strong>Fecha y hora</strong>
             <span>
@@ -198,6 +240,12 @@ export function Reservar() {
           </form>
         </aside>
       </div>
+
+      <BookingSuccessModal
+        message={successModal?.message}
+        detail={successModal?.detail}
+        onClose={() => setSuccessModal(null)}
+      />
     </main>
   );
 }

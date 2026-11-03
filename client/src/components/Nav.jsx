@@ -138,10 +138,18 @@ export function Nav() {
           <span className="nav-divider" aria-hidden="true" />
 
           <div className="nav-actions">
-            <NavLink to="/reservar" className={({ isActive }) => `btn btn-small${isActive ? ' is-active' : ''}`}>
+            <NavLink
+              to="/reservar"
+              className={() =>
+                `btn btn-small${pageKey === 'eventos' ? ' btn-nav-alt' : ''}${pageKey === 'reservar' ? ' is-active' : ''}`
+              }
+            >
               Reservar sesión individual
             </NavLink>
-            <NavLink to="/eventos" className={({ isActive }) => `btn btn-small btn-nav-alt${isActive ? ' is-active' : ''}`}>
+            <NavLink
+              to="/eventos"
+              className={() => `btn btn-small btn-nav-alt${pageKey === 'eventos' ? ' is-active' : ''}`}
+            >
               Votar eventos grupales
             </NavLink>
           </div>
