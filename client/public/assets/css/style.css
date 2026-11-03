@@ -1943,6 +1943,7 @@ table.data-table th {
 
 .admin-header-logo {
   flex-shrink: 0;
+  margin-left: clamp(1.25rem, 4vw, 2.75rem);
 }
 
 .admin-header-toolbar {

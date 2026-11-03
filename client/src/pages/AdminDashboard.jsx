@@ -376,7 +376,7 @@ export function AdminDashboard() {
     <div className="admin-body">
       <header className="admin-header">
         <div className="container admin-header-inner">
-          <Link to="/admin" className="logo admin-header-logo">
+          <Link to="/" className="logo admin-header-logo" title="Ir al sitio web">
             <span className="logo-mark" />
             <span>Espacio Calma</span>
           </Link>
