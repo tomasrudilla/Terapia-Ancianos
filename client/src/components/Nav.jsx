@@ -148,7 +148,9 @@ export function Nav() {
             </NavLink>
             <NavLink
               to="/eventos"
-              className={() => `btn btn-small btn-nav-alt${pageKey === 'eventos' ? ' is-active' : ''}`}
+              className={() =>
+                `btn btn-small${pageKey !== 'eventos' ? ' btn-nav-alt' : ''}${pageKey === 'eventos' ? ' is-active' : ''}`
+              }
             >
               Votar eventos grupales
             </NavLink>
