@@ -37,6 +37,10 @@ export function Nav() {
   }, [location.pathname]);
 
   useEffect(() => {
+    if (open) setInicioOpen(true);
+  }, [open]);
+
+  useEffect(() => {
     document.body.classList.toggle('nav-open', open);
     return () => document.body.classList.remove('nav-open');
   }, [open]);
@@ -94,7 +98,10 @@ export function Nav() {
                 Inicio
                 <span className="nav-chevron" aria-hidden="true" />
               </button>
-              <div className={`nav-dropdown-panel${inicioOpen ? ' is-open' : ''}`} hidden={!inicioOpen}>
+              <div
+                className={`nav-dropdown-panel${inicioOpen || open ? ' is-open' : ''}`}
+                hidden={!inicioOpen && !open}
+              >
                 <p className="nav-dropdown-eyebrow">Secciones del inicio</p>
                 <Link
                   to="/#servicios"
