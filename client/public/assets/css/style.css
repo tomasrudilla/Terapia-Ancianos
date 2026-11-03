@@ -2127,6 +2127,52 @@ table.data-table th {
   min-width: 6.5rem;
 }
 
+.admin-events-history {
+  margin-top: 1.75rem;
+  padding-top: 0.5rem;
+}
+
+.admin-history-toggle {
+  font-weight: 500;
+}
+
+.admin-history-count {
+  margin-left: 0.35rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.admin-history-table {
+  margin-top: 1rem;
+}
+
+.admin-row-past td {
+  color: var(--text-muted);
+}
+
+.admin-voters-modal {
+  width: min(100%, 32rem);
+  max-height: min(85vh, 28rem);
+  overflow: auto;
+}
+
+.admin-voters-modal-list {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-voters-modal-list li {
+  padding: 0.65rem 0.75rem;
+  background: var(--bg-soft);
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
 .admin-lead {
   margin: -0.5rem 0 1.25rem;
   color: var(--text-muted);

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { MonthCalendar } from '../components/MonthCalendar';
 import { apiDelete, apiGetAdmin, apiPost, clearAdminToken, getAdminToken } from '../api';
+import { todayISOInTimezone } from '../lib/dates';
 
 function fmtDate(iso) {
   if (!iso) return '—';
@@ -35,10 +36,51 @@ function monthStart(d) {
 const TABS = [
   { id: 'overview', label: 'Resumen' },
   { id: 'bookings', label: 'Reservas individuales' },
-  { id: 'registrations', label: 'Inscripciones eventos' },
   { id: 'events', label: 'Eventos' },
   { id: 'blocks', label: 'Bloqueos' },
 ];
+
+function AdminVotersDialog({ data, onClose }) {
+  if (!data) return null;
+
+  return (
+    <div className="admin-modal-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="admin-modal admin-voters-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-voters-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="admin-voters-title" className="admin-modal-title">
+          Votos: {data.title}
+        </h3>
+        <p className="admin-modal-text">{data.subtitle}</p>
+        {data.voters.length === 0 ? (
+          <p className="admin-muted">No hay votos registrados.</p>
+        ) : (
+          <ul className="admin-voters-modal-list">
+            {data.voters.map((v, i) => (
+              <li key={`${v.email}-${i}`}>
+                <strong>{v.name}</strong>
+                <span>
+                  {' '}
+                  · <a href={`mailto:${v.email}`}>{v.email}</a>
+                </span>
+                {v.created_at ? <span className="admin-muted"> · {fmtDateTime(v.created_at)}</span> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="admin-modal-actions">
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AdminConfirmDialog({ dialog, onCancel, onConfirm }) {
   if (!dialog) return null;
@@ -77,14 +119,13 @@ export function AdminDashboard() {
   const [tab, setTab] = useState('overview');
   const [overviewStats, setOverviewStats] = useState(null);
   const [bookings, setBookings] = useState([]);
-  const [registrations, setRegistrations] = useState([]);
   const [events, setEvents] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [bookingCalView, setBookingCalView] = useState(() => monthStart(new Date()));
-  const [regCalView, setRegCalView] = useState(() => monthStart(new Date()));
   const [selectedBookingDate, setSelectedBookingDate] = useState(null);
-  const [selectedRegDate, setSelectedRegDate] = useState(null);
   const [eventFormDate, setEventFormDate] = useState('');
+  const [showEventHistory, setShowEventHistory] = useState(false);
+  const [votersDialog, setVotersDialog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
@@ -98,11 +139,6 @@ export function AdminDashboard() {
   const loadBookings = useCallback(async () => {
     const data = await apiGetAdmin('/api/admin/bookings?all=1');
     setBookings(data.bookings || []);
-  }, []);
-
-  const loadRegistrations = useCallback(async () => {
-    const data = await apiGetAdmin('/api/admin/registrations');
-    setRegistrations(data.registrations || []);
   }, []);
 
   const loadEvents = useCallback(async () => {
@@ -119,13 +155,13 @@ export function AdminDashboard() {
     setLoading(true);
     setError('');
     try {
-      await Promise.all([loadOverview(), loadBookings(), loadRegistrations(), loadEvents(), loadBlocks()]);
+      await Promise.all([loadOverview(), loadBookings(), loadEvents(), loadBlocks()]);
     } catch (err) {
       setError(err.message || 'No se pudo cargar el panel');
     } finally {
       setLoading(false);
     }
-  }, [loadOverview, loadBookings, loadRegistrations, loadEvents, loadBlocks]);
+  }, [loadOverview, loadBookings, loadEvents, loadBlocks]);
 
   useEffect(() => {
     if (!token) return;
@@ -133,13 +169,15 @@ export function AdminDashboard() {
   }, [token, refresh]);
 
   useEffect(() => {
-    if (!confirmDialog) return;
+    if (!confirmDialog && !votersDialog) return;
     const onKey = (e) => {
-      if (e.key === 'Escape') setConfirmDialog(null);
+      if (e.key !== 'Escape') return;
+      setConfirmDialog(null);
+      setVotersDialog(null);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [confirmDialog]);
+  }, [confirmDialog, votersDialog]);
 
   const openConfirm = (options) => {
     setConfirmDialog({
@@ -163,12 +201,6 @@ export function AdminDashboard() {
     return set;
   }, [bookings]);
 
-  const daysWithRegistrations = useMemo(() => {
-    const set = new Set();
-    registrations.forEach((r) => set.add(r.event_date));
-    return set;
-  }, [registrations]);
-
   const bookingsOnSelectedDay = useMemo(() => {
     if (!selectedBookingDate) return [];
     return bookings
@@ -176,20 +208,26 @@ export function AdminDashboard() {
       .sort((a, b) => a.booking_time.localeCompare(b.booking_time));
   }, [bookings, selectedBookingDate]);
 
-  const registrationsOnSelectedDay = useMemo(() => {
-    if (!selectedRegDate) return [];
-    return registrations.filter((r) => r.event_date === selectedRegDate);
-  }, [registrations, selectedRegDate]);
+  const groupEvents = useMemo(() => events.filter((ev) => ev.event_type === 'event'), [events]);
 
-  const eventsSorted = useMemo(
-    () =>
-      [...events].sort((a, b) => {
+  const { eventsUpcoming, eventsPast } = useMemo(() => {
+    const today = todayISOInTimezone();
+    const upcoming = groupEvents
+      .filter((ev) => ev.event_date >= today)
+      .sort((a, b) => {
+        const d = a.event_date.localeCompare(b.event_date);
+        if (d !== 0) return d;
+        return a.start_time.localeCompare(b.start_time);
+      });
+    const past = groupEvents
+      .filter((ev) => ev.event_date < today)
+      .sort((a, b) => {
         const d = b.event_date.localeCompare(a.event_date);
         if (d !== 0) return d;
         return b.start_time.localeCompare(a.start_time);
-      }),
-    [events],
-  );
+      });
+    return { eventsUpcoming: upcoming, eventsPast: past };
+  }, [groupEvents]);
 
   if (!token) return <Navigate to="/admin/login" replace />;
 
@@ -236,7 +274,7 @@ export function AdminDashboard() {
     setMsg('Evento creado');
     e.target.reset();
     setEventFormDate('');
-    await Promise.all([loadEvents(), loadOverview(), loadRegistrations()]);
+    await Promise.all([loadEvents(), loadOverview()]);
   };
 
   const submitBlock = async (e) => {
@@ -263,12 +301,6 @@ export function AdminDashboard() {
     setBookingCalView(new Date(y, m - 1, 1));
   };
 
-  const pickRegDate = (dateStr) => {
-    setSelectedRegDate(dateStr);
-    const [y, m] = dateStr.split('-').map(Number);
-    setRegCalView(new Date(y, m - 1, 1));
-  };
-
   const deleteEvent = (id) => {
     openConfirm({
       title: 'Eliminar evento',
@@ -276,10 +308,48 @@ export function AdminDashboard() {
       onConfirm: async () => {
         await apiDelete('/api/admin/events', { id });
         setMsg('Evento eliminado');
-        await Promise.all([loadEvents(), loadRegistrations(), loadOverview()]);
+        await Promise.all([loadEvents(), loadOverview()]);
       },
     });
   };
+
+  const renderEventRows = (list) =>
+    list.map((ev) => (
+      <tr key={ev.id} className={ev.event_date < todayISOInTimezone() ? 'admin-row-past' : undefined}>
+        <td>{fmtDate(ev.event_date)}</td>
+        <td>
+          {ev.start_time} – {ev.end_time}
+        </td>
+        <td>{ev.title}</td>
+        <td>
+          <strong>{ev.vote_count ?? 0}</strong>
+        </td>
+        <td className="admin-participants-cell">
+          {(ev.vote_count ?? 0) > 0 ? (
+            <button
+              type="button"
+              className="btn btn-ghost btn-icon"
+              onClick={() =>
+                setVotersDialog({
+                  title: ev.title,
+                  subtitle: `${fmtDate(ev.event_date)} · ${ev.start_time} – ${ev.end_time} hs`,
+                  voters: ev.voters || [],
+                })
+              }
+            >
+              Ver votos ({ev.vote_count})
+            </button>
+          ) : (
+            '—'
+          )}
+        </td>
+        <td>
+          <button type="button" className="btn btn-danger btn-icon" onClick={() => deleteEvent(ev.id)}>
+            Eliminar
+          </button>
+        </td>
+      </tr>
+    ));
 
   return (
     <div className="admin-body">
@@ -349,8 +419,8 @@ export function AdminDashboard() {
                   <span className="admin-stat-label">Reservas canceladas</span>
                 </div>
                 <div className="admin-stat">
-                  <span className="admin-stat-value">{overviewStats?.registrations_total ?? '—'}</span>
-                  <span className="admin-stat-label">Inscripciones a eventos</span>
+                  <span className="admin-stat-value">{overviewStats?.votes_total ?? '—'}</span>
+                  <span className="admin-stat-label">Votos en eventos</span>
                 </div>
                 <div className="admin-stat">
                   <span className="admin-stat-value">{overviewStats?.events_upcoming ?? '—'}</span>
@@ -361,8 +431,8 @@ export function AdminDashboard() {
                 <button type="button" className="btn btn-secondary" onClick={() => setTab('bookings')}>
                   Calendario de reservas
                 </button>
-                <button type="button" className="btn btn-secondary" onClick={() => setTab('registrations')}>
-                  Calendario de inscripciones
+                <button type="button" className="btn btn-secondary" onClick={() => setTab('events')}>
+                  Propuestas y votos
                 </button>
                 <button type="button" className="btn btn-ghost" onClick={refresh}>
                   Actualizar
@@ -443,59 +513,6 @@ export function AdminDashboard() {
             </div>
           )}
 
-          {tab === 'registrations' && (
-            <div className="admin-card">
-              <h2>Inscripciones a eventos grupales</h2>
-              <p className="admin-lead">Elegí un día para ver las inscripciones a eventos grupales.</p>
-              <div className="admin-calendar-layout">
-                <div className="calendar-panel admin-calendar-panel">
-                  <MonthCalendar
-                    adminMode
-                    view={regCalView}
-                    onPrev={() => setRegCalView(new Date(regCalView.getFullYear(), regCalView.getMonth() - 1, 1))}
-                    onNext={() => setRegCalView(new Date(regCalView.getFullYear(), regCalView.getMonth() + 1, 1))}
-                    daysWithEvents={daysWithRegistrations}
-                    selectedDate={selectedRegDate}
-                    onSelectDate={pickRegDate}
-                  />
-                  <p className="calendar-legend">
-                    <span className="legend-dot legend-event" /> Día con inscripciones
-                  </p>
-                </div>
-                <div className="admin-day-detail">
-                  <h3 className="admin-subtitle">{selectedRegDate ? fmtDate(selectedRegDate) : 'Seleccioná un día'}</h3>
-                  {!selectedRegDate && <p className="admin-empty-inline">Marcá una fecha en el calendario.</p>}
-                  {selectedRegDate && registrationsOnSelectedDay.length === 0 && (
-                    <p className="admin-empty-inline">No hay inscripciones en eventos de este día.</p>
-                  )}
-                  <ul className="admin-day-list">
-                    {registrationsOnSelectedDay.map((r) => (
-                      <li key={r.id} className="admin-day-item">
-                        <div className="admin-day-item-head">
-                          <strong>{r.event_title}</strong>
-                        </div>
-                        <p className="admin-day-item-meta">
-                          {r.start_time} – {r.end_time} hs
-                        </p>
-                        <p className="admin-day-item-name">{r.participant_name}</p>
-                        <p className="admin-day-item-meta">
-                          <a href={`mailto:${r.participant_email}`}>{r.participant_email}</a>
-                          {r.participant_phone ? (
-                            <>
-                              {' · '}
-                              <a href={`tel:${r.participant_phone}`}>{r.participant_phone}</a>
-                            </>
-                          ) : null}
-                        </p>
-                        <p className="admin-muted">Inscripto: {fmtDateTime(r.created_at)}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
           {tab === 'events' && (
             <div className="admin-card">
               <h2>Eventos y talleres</h2>
@@ -555,7 +572,9 @@ export function AdminDashboard() {
               </form>
 
               <h3 className="admin-subtitle">Propuestas publicadas</h3>
-              <p className="admin-lead">En el sitio los visitantes votan cuáles les interesan más (no es inscripción).</p>
+              <p className="admin-lead">
+                En el sitio se muestran eventos de hoy en adelante. Los visitantes votan cuáles les interesan más.
+              </p>
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
@@ -569,48 +588,49 @@ export function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {eventsSorted.length === 0 ? (
+                    {eventsUpcoming.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="admin-empty">
-                          No hay eventos cargados.
+                          No hay eventos vigentes (desde hoy).
                         </td>
                       </tr>
                     ) : (
-                      eventsSorted.map((ev) => (
-                        <tr key={ev.id}>
-                          <td>{fmtDate(ev.event_date)}</td>
-                          <td>
-                            {ev.start_time} – {ev.end_time}
-                          </td>
-                          <td>{ev.title}</td>
-                          <td>
-                            <strong>{ev.vote_count ?? 0}</strong>
-                          </td>
-                          <td className="admin-participants-cell">
-                            {ev.voters?.length ? (
-                              <ul className="admin-participant-list">
-                                {ev.voters.map((v, i) => (
-                                  <li key={`${ev.id}-v-${i}`}>
-                                    <strong>{v.name}</strong>
-                                    {v.email ? ` · ${v.email}` : ''}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              '—'
-                            )}
-                          </td>
-                          <td>
-                            <button type="button" className="btn btn-danger btn-icon" onClick={() => deleteEvent(ev.id)}>
-                              Eliminar
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                      renderEventRows(eventsUpcoming)
                     )}
                   </tbody>
                 </table>
               </div>
+
+              {eventsPast.length > 0 && (
+                <div className="admin-events-history">
+                  <button
+                    type="button"
+                    className="btn btn-ghost admin-history-toggle"
+                    aria-expanded={showEventHistory}
+                    onClick={() => setShowEventHistory((v) => !v)}
+                  >
+                    {showEventHistory ? 'Ocultar historial de eventos' : 'Ver historial de eventos'}
+                    <span className="admin-history-count">({eventsPast.length})</span>
+                  </button>
+                  {showEventHistory && (
+                    <div className="table-wrap admin-history-table">
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>Fecha</th>
+                            <th>Horario</th>
+                            <th>Título</th>
+                            <th>Votos</th>
+                            <th>Detalle votos</th>
+                            <th />
+                          </tr>
+                        </thead>
+                        <tbody>{renderEventRows(eventsPast)}</tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -699,6 +719,7 @@ export function AdminDashboard() {
         onCancel={() => setConfirmDialog(null)}
         onConfirm={runConfirm}
       />
+      <AdminVotersDialog data={votersDialog} onClose={() => setVotersDialog(null)} />
     </div>
   );
 }
