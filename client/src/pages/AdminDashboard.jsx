@@ -44,30 +44,46 @@ function AdminMobileNav({ tab, open, onToggle, onSelect }) {
   const current = TABS.find((t) => t.id === tab) ?? TABS[0];
 
   return (
-    <div className={`admin-mobile-nav${open ? ' is-open' : ''}`}>
+    <nav className={`admin-mobile-menu${open ? ' is-open' : ''}`} aria-label="Secciones del panel">
+      {open ? (
+        <button
+          type="button"
+          className="admin-mobile-menu-backdrop"
+          aria-label="Cerrar menú"
+          tabIndex={-1}
+          onClick={onToggle}
+        />
+      ) : null}
       <button
         type="button"
-        className="admin-mobile-nav-trigger"
+        className="admin-mobile-menu-trigger"
         aria-expanded={open}
-        aria-controls="admin-mobile-nav-panel"
+        aria-controls="admin-mobile-menu-list"
         onClick={onToggle}
       >
-        <span className="admin-mobile-nav-label">{current.label}</span>
+        <span className="admin-mobile-menu-trigger-text">
+          <span className="admin-mobile-menu-kicker">Menú</span>
+          <span className="admin-mobile-menu-current">{current.label}</span>
+        </span>
         <span className="nav-chevron" aria-hidden="true" />
       </button>
-      <div id="admin-mobile-nav-panel" className="admin-mobile-nav-panel" hidden={!open}>
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={`tab-btn${tab === t.id ? ' active' : ''}`}
-            onClick={() => onSelect(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-    </div>
+      {open ? (
+        <ul id="admin-mobile-menu-list" className="admin-mobile-menu-list">
+          {TABS.map((t) => (
+            <li key={t.id}>
+              <button
+                type="button"
+                className={`admin-mobile-menu-item${tab === t.id ? ' is-active' : ''}`}
+                aria-current={tab === t.id ? 'page' : undefined}
+                onClick={() => onSelect(t.id)}
+              >
+                {t.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </nav>
   );
 }
 
