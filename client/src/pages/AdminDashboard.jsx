@@ -40,6 +40,37 @@ const TABS = [
   { id: 'blocks', label: 'Bloqueos' },
 ];
 
+function AdminMobileNav({ tab, open, onToggle, onSelect }) {
+  const current = TABS.find((t) => t.id === tab) ?? TABS[0];
+
+  return (
+    <div className={`admin-mobile-nav${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="admin-mobile-nav-trigger"
+        aria-expanded={open}
+        aria-controls="admin-mobile-nav-panel"
+        onClick={onToggle}
+      >
+        <span className="admin-mobile-nav-label">{current.label}</span>
+        <span className="nav-chevron" aria-hidden="true" />
+      </button>
+      <div id="admin-mobile-nav-panel" className="admin-mobile-nav-panel" hidden={!open}>
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className={`tab-btn${tab === t.id ? ' active' : ''}`}
+            onClick={() => onSelect(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AdminVotersDialog({ data, onClose }) {
   if (!data) return null;
 
@@ -131,6 +162,7 @@ export function AdminDashboard() {
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
 
   const loadBookings = useCallback(async () => {
     const data = await apiGetAdmin('/api/admin/bookings?all=1');
@@ -179,15 +211,20 @@ export function AdminDashboard() {
   }, [tab]);
 
   useEffect(() => {
-    if (!confirmDialog && !votersDialog) return;
+    if (!confirmDialog && !votersDialog && !adminMenuOpen) return;
     const onKey = (e) => {
       if (e.key !== 'Escape') return;
       setConfirmDialog(null);
       setVotersDialog(null);
+      setAdminMenuOpen(false);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [confirmDialog, votersDialog]);
+  }, [confirmDialog, votersDialog, adminMenuOpen]);
+
+  useEffect(() => {
+    setAdminMenuOpen(false);
+  }, [tab]);
 
   const openConfirm = (options) => {
     setConfirmDialog({
@@ -407,7 +444,17 @@ export function AdminDashboard() {
       </header>
 
       <div className="container admin-layout">
-        <aside className="admin-sidebar">
+        <AdminMobileNav
+          tab={tab}
+          open={adminMenuOpen}
+          onToggle={() => setAdminMenuOpen((v) => !v)}
+          onSelect={(id) => {
+            setTab(id);
+            setAdminMenuOpen(false);
+          }}
+        />
+
+        <aside className="admin-sidebar admin-desktop-sidebar">
           <nav>
             {TABS.map((t) => (
               <button

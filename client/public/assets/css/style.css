@@ -1814,6 +1814,10 @@ a:hover {
   width: 100%;
 }
 
+.admin-mobile-nav {
+  display: none;
+}
+
 .admin-sidebar {
   background: var(--surface);
   border-radius: var(--radius);
@@ -2768,35 +2772,69 @@ table.data-table th {
     padding: 1.25rem 0 2.5rem;
   }
 
-  .admin-sidebar {
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    padding: 0.5rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .admin-sidebar::-webkit-scrollbar {
+  .admin-desktop-sidebar {
     display: none;
   }
 
-  .admin-sidebar nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+  .admin-mobile-nav {
+    display: block;
+    position: relative;
+    grid-column: 1 / -1;
+    z-index: 6;
   }
 
-  .admin-sidebar button.tab-btn {
-    white-space: nowrap;
-    width: auto;
-    flex: 1 1 calc(50% - 0.25rem);
-    min-width: calc(50% - 0.25rem);
-    text-align: center;
-    padding: 0.65rem 0.5rem;
-    font-size: 0.8rem;
+  .admin-mobile-nav-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 14px rgba(44, 51, 48, 0.05);
+    cursor: pointer;
+  }
+
+  .admin-mobile-nav-trigger .nav-chevron {
+    flex-shrink: 0;
+    margin-left: 0.75rem;
+  }
+
+  .admin-mobile-nav.is-open .admin-mobile-nav-trigger .nav-chevron {
+    transform: rotate(-135deg) translateY(1px);
+  }
+
+  .admin-mobile-nav-panel {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+  }
+
+  .admin-mobile-nav-panel[hidden] {
+    display: none !important;
+  }
+
+  .admin-mobile-nav-panel .tab-btn {
+    width: 100%;
+    text-align: left;
     min-height: 44px;
+    padding: 0.75rem 1rem;
+    font-size: 0.92rem;
   }
 
   .admin-card {
@@ -3203,12 +3241,6 @@ table.data-table th {
     line-height: 1.25;
   }
 
-  .admin-sidebar button.tab-btn {
-    flex: 1 1 100%;
-    min-width: 100%;
-    font-size: 0.78rem;
-  }
-
   .admin-day-item-head {
     flex-direction: column;
     align-items: flex-start;
@@ -3258,11 +3290,6 @@ table.data-table th {
 }
 
 @media (max-width: 380px) {
-  .admin-sidebar button.tab-btn {
-    font-size: 0.72rem;
-    padding: 0.55rem 0.35rem;
-  }
-
   .slots-grid {
     grid-template-columns: 1fr;
   }

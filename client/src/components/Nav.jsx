@@ -106,24 +106,6 @@ export function Nav() {
             >
               Experiencias
             </NavLink>
-            <NavLink
-              to="/reservar"
-              className={() =>
-                `nav-mobile-item btn btn-small nav-mobile-cta${pageKey === 'eventos' ? ' btn-nav-alt' : ''}${pageKey === 'reservar' ? ' is-active' : ''}`
-              }
-              onClick={closeMenu}
-            >
-              Reservar sesión individual
-            </NavLink>
-            <NavLink
-              to="/eventos"
-              className={() =>
-                `nav-mobile-item btn btn-small nav-mobile-cta btn-nav-alt${pageKey === 'eventos' ? ' is-active' : ''}`
-              }
-              onClick={closeMenu}
-            >
-              Votar eventos grupales
-            </NavLink>
           </div>
 
           <div className="nav-desktop-only">
