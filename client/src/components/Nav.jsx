@@ -3,6 +3,13 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { getAdminToken } from '../api';
 import { homeSectionFromHash, scrollToHomeSection } from '../lib/scrollToSection';
 
+const HOME_SECTION_LINKS = [
+  { id: 'servicios', label: 'Servicios' },
+  { id: 'sobre-mi', label: 'Sobre mí' },
+  { id: 'contacto', label: 'Contacto' },
+  { id: 'portada', label: 'Ver portada completa', foot: true },
+];
+
 export function Nav() {
   const [open, setOpen] = useState(false);
   const [inicioOpen, setInicioOpen] = useState(false);
@@ -37,10 +44,6 @@ export function Nav() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (open) setInicioOpen(true);
-  }, [open]);
-
-  useEffect(() => {
     document.body.classList.toggle('nav-open', open);
     return () => document.body.classList.remove('nav-open');
   }, [open]);
@@ -68,6 +71,11 @@ export function Nav() {
   const hashSection = isHome ? homeSectionFromHash(location.hash) : '';
   const adminPath = getAdminToken() ? '/admin' : '/admin/login';
 
+  const homeLinkClass = (sectionId, foot = false) => {
+    const active = hashSection === sectionId || (sectionId === 'portada' && hashSection === 'portada');
+    return `nav-link${foot ? ' nav-link-foot' : ''}${active ? ' is-active' : ''}`;
+  };
+
   return (
     <header className="site-header">
       <div className="container header-inner">
@@ -88,7 +96,20 @@ export function Nav() {
 
         <nav className={`main-nav ${open ? 'open' : ''}`} id="main-nav" aria-label="Principal">
           <div className="nav-links">
-            <div className="nav-dropdown" data-nav-dropdown>
+            <div className="nav-mobile-home" aria-label="Secciones del inicio">
+              {HOME_SECTION_LINKS.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.id === 'portada' ? '/' : `/#${item.id}`}
+                  className={homeLinkClass(item.id, item.foot)}
+                  onClick={goHomeSection(item.id)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="nav-dropdown nav-desktop-dropdown">
               <button
                 type="button"
                 className={`nav-dropdown-trigger${pageKey === 'inicio' ? ' is-active' : ''}`}
@@ -98,45 +119,31 @@ export function Nav() {
                 Inicio
                 <span className="nav-chevron" aria-hidden="true" />
               </button>
-              <div
-                className={`nav-dropdown-panel${inicioOpen || open ? ' is-open' : ''}`}
-                hidden={!inicioOpen && !open}
-              >
+              <div className={`nav-dropdown-panel${inicioOpen ? ' is-open' : ''}`}>
                 <p className="nav-dropdown-eyebrow">Secciones del inicio</p>
-                <Link
-                  to="/#servicios"
-                  className={hashSection === 'servicios' ? 'is-active' : ''}
-                  role="menuitem"
-                  onClick={goHomeSection('servicios')}
-                >
-                  Servicios
-                </Link>
-                <Link
-                  to="/#sobre-mi"
-                  className={hashSection === 'sobre-mi' ? 'is-active' : ''}
-                  role="menuitem"
-                  onClick={goHomeSection('sobre-mi')}
-                >
-                  Sobre mí
-                </Link>
-                <Link
-                  to="/#contacto"
-                  className={hashSection === 'contacto' ? 'is-active' : ''}
-                  role="menuitem"
-                  onClick={goHomeSection('contacto')}
-                >
-                  Contacto
-                </Link>
-                <Link
-                  to="/"
-                  className={`nav-dropdown-foot${hashSection === 'portada' ? ' is-active' : ''}`}
-                  role="menuitem"
-                  onClick={goHomeSection('portada')}
-                >
-                  Ver portada completa
-                </Link>
+                {HOME_SECTION_LINKS.map((item) => {
+                  const active =
+                    hashSection === item.id || (item.id === 'portada' && hashSection === 'portada');
+                  const cls = item.foot
+                    ? `nav-dropdown-foot${active ? ' is-active' : ''}`
+                    : active
+                      ? 'is-active'
+                      : '';
+                  return (
+                    <Link
+                      key={`desktop-${item.id}`}
+                      to={item.id === 'portada' ? '/' : `/#${item.id}`}
+                      className={cls || undefined}
+                      role="menuitem"
+                      onClick={goHomeSection(item.id)}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
+
             <NavLink to="/experiencias" className={({ isActive }) => `nav-link${isActive ? ' is-active' : ''}`}>
               Experiencias
             </NavLink>
@@ -167,7 +174,7 @@ export function Nav() {
         <button
           type="button"
           className="nav-toggle"
-          aria-label="Abrir menú"
+          aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
           aria-expanded={open}
           aria-controls="main-nav"
           onClick={() => setOpen((v) => !v)}

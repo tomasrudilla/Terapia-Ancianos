@@ -229,6 +229,10 @@ a:hover {
   color: var(--accent-dark) !important;
 }
 
+.nav-mobile-home {
+  display: none;
+}
+
 .nav-dropdown {
   position: relative;
 }
@@ -3064,72 +3068,36 @@ table.data-table th {
     align-items: center;
   }
 
-  .nav-dropdown {
-    width: 100%;
-  }
-
-  .main-nav.open .nav-dropdown-trigger {
+  .nav-desktop-dropdown {
     display: none;
   }
 
-  .nav-dropdown-trigger {
+  .nav-mobile-home {
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    justify-content: space-between;
-    padding: 0.75rem 0.35rem;
-    min-height: 48px;
-  }
-
-  .nav-dropdown-panel {
-    position: static;
-    transform: none;
-    min-width: 0;
-    margin-top: 0;
-    box-shadow: none;
-    border: none;
-    background: transparent;
-    padding: 0;
     gap: 0.15rem;
   }
 
-  .nav-dropdown-panel::before {
-    display: none;
-  }
-
-  .main-nav:not(.open) .nav-dropdown-panel:not(.is-open) {
-    display: none;
-  }
-
-  .main-nav.open .nav-dropdown-panel {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .main-nav.open .nav-dropdown-eyebrow {
-    display: none;
-  }
-
-  .nav-dropdown-panel a,
-  .nav-dropdown-panel .nav-dropdown-foot {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 0.35rem;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--text-muted);
+  .nav-mobile-home .nav-link {
+    width: 100%;
+    box-shadow: none;
     border-radius: var(--radius-sm);
   }
 
-  .main-nav.open .nav-dropdown-panel a:hover,
-  .main-nav.open .nav-dropdown-panel a.is-active {
-    color: var(--accent-dark);
+  .nav-mobile-home .nav-link.is-active {
+    box-shadow: none;
     background: var(--accent-soft);
+    color: var(--accent-dark);
+    padding-inline: 0.5rem;
   }
 
-  .nav-dropdown-foot {
-    margin-top: 0;
-    padding-top: 0.75rem;
-    border-top: none;
+  .nav-link.is-active {
+    box-shadow: none;
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    border-radius: var(--radius-sm);
+    padding-inline: 0.5rem;
   }
 
   .nav-toggle {
@@ -3143,6 +3111,12 @@ table.data-table th {
   .header-inner {
     position: relative;
     padding: 0.75rem 0;
+    flex-wrap: wrap;
+  }
+
+  .main-nav {
+    flex-basis: 100%;
+    order: 3;
   }
 
   .logo {
