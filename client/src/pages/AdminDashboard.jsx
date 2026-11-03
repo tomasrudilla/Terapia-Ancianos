@@ -36,7 +36,8 @@ function monthStart(d) {
 const TABS = [
   { id: 'overview', label: 'Resumen' },
   { id: 'bookings', label: 'Reservas individuales' },
-  { id: 'events', label: 'Eventos' },
+  { id: 'event-reservations', label: 'Reservas eventos' },
+  { id: 'new-event', label: 'Nuevo evento' },
   { id: 'blocks', label: 'Bloqueos' },
 ];
 
@@ -122,7 +123,9 @@ export function AdminDashboard() {
   const [events, setEvents] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [bookingCalView, setBookingCalView] = useState(() => monthStart(new Date()));
+  const [eventCalView, setEventCalView] = useState(() => monthStart(new Date()));
   const [selectedBookingDate, setSelectedBookingDate] = useState(null);
+  const [selectedEventDate, setSelectedEventDate] = useState(null);
   const [eventFormDate, setEventFormDate] = useState('');
   const [showEventHistory, setShowEventHistory] = useState(false);
   const [votersDialog, setVotersDialog] = useState(null);
@@ -210,24 +213,29 @@ export function AdminDashboard() {
 
   const groupEvents = useMemo(() => events.filter((ev) => ev.event_type === 'event'), [events]);
 
-  const { eventsUpcoming, eventsPast } = useMemo(() => {
+  const eventsPast = useMemo(() => {
     const today = todayISOInTimezone();
-    const upcoming = groupEvents
-      .filter((ev) => ev.event_date >= today)
-      .sort((a, b) => {
-        const d = a.event_date.localeCompare(b.event_date);
-        if (d !== 0) return d;
-        return a.start_time.localeCompare(b.start_time);
-      });
-    const past = groupEvents
+    return groupEvents
       .filter((ev) => ev.event_date < today)
       .sort((a, b) => {
         const d = b.event_date.localeCompare(a.event_date);
         if (d !== 0) return d;
         return b.start_time.localeCompare(a.start_time);
       });
-    return { eventsUpcoming: upcoming, eventsPast: past };
   }, [groupEvents]);
+
+  const daysWithGroupEvents = useMemo(() => {
+    const set = new Set();
+    groupEvents.forEach((ev) => set.add(ev.event_date));
+    return set;
+  }, [groupEvents]);
+
+  const eventsOnSelectedDay = useMemo(() => {
+    if (!selectedEventDate) return [];
+    return groupEvents
+      .filter((ev) => ev.event_date === selectedEventDate)
+      .sort((a, b) => a.start_time.localeCompare(b.start_time));
+  }, [groupEvents, selectedEventDate]);
 
   if (!token) return <Navigate to="/admin/login" replace />;
 
@@ -271,10 +279,15 @@ export function AdminDashboard() {
       },
       true,
     );
+    const createdDate = fd.get('event_date');
     setMsg('Evento creado');
     e.target.reset();
     setEventFormDate('');
     await Promise.all([loadEvents(), loadOverview()]);
+    if (createdDate) {
+      setTab('event-reservations');
+      pickEventDate(String(createdDate));
+    }
   };
 
   const submitBlock = async (e) => {
@@ -299,6 +312,20 @@ export function AdminDashboard() {
     setSelectedBookingDate(dateStr);
     const [y, m] = dateStr.split('-').map(Number);
     setBookingCalView(new Date(y, m - 1, 1));
+  };
+
+  const pickEventDate = (dateStr) => {
+    setSelectedEventDate(dateStr);
+    const [y, m] = dateStr.split('-').map(Number);
+    setEventCalView(new Date(y, m - 1, 1));
+  };
+
+  const openVotersDialog = (ev) => {
+    setVotersDialog({
+      title: ev.title,
+      subtitle: `${fmtDate(ev.event_date)} · ${ev.start_time} – ${ev.end_time} hs`,
+      voters: ev.voters || [],
+    });
   };
 
   const deleteEvent = (id) => {
@@ -329,13 +356,7 @@ export function AdminDashboard() {
             <button
               type="button"
               className="btn btn-ghost btn-icon"
-              onClick={() =>
-                setVotersDialog({
-                  title: ev.title,
-                  subtitle: `${fmtDate(ev.event_date)} · ${ev.start_time} – ${ev.end_time} hs`,
-                  voters: ev.voters || [],
-                })
-              }
+              onClick={() => openVotersDialog(ev)}
             >
               Ver votos ({ev.vote_count})
             </button>
@@ -431,8 +452,8 @@ export function AdminDashboard() {
                 <button type="button" className="btn btn-secondary" onClick={() => setTab('bookings')}>
                   Calendario de reservas
                 </button>
-                <button type="button" className="btn btn-secondary" onClick={() => setTab('events')}>
-                  Propuestas y votos
+                <button type="button" className="btn btn-secondary" onClick={() => setTab('event-reservations')}>
+                  Reservas eventos
                 </button>
                 <button type="button" className="btn btn-ghost" onClick={refresh}>
                   Actualizar
@@ -513,11 +534,98 @@ export function AdminDashboard() {
             </div>
           )}
 
-          {tab === 'events' && (
+          {tab === 'event-reservations' && (
             <div className="admin-card">
-              <h2>Eventos y talleres</h2>
+              <h2>Reservas eventos grupales</h2>
+              <p className="admin-lead">
+                Elegí un día en el calendario para ver propuestas publicadas, votos y gestionar cada evento.
+              </p>
+              <div className="admin-calendar-layout">
+                <div className="calendar-panel admin-calendar-panel">
+                  <MonthCalendar
+                    adminMode
+                    view={eventCalView}
+                    onPrev={() => setEventCalView(new Date(eventCalView.getFullYear(), eventCalView.getMonth() - 1, 1))}
+                    onNext={() => setEventCalView(new Date(eventCalView.getFullYear(), eventCalView.getMonth() + 1, 1))}
+                    daysWithEvents={daysWithGroupEvents}
+                    selectedDate={selectedEventDate}
+                    onSelectDate={pickEventDate}
+                  />
+                  <p className="calendar-legend">
+                    <span className="legend-dot legend-event" /> Día con evento grupal
+                  </p>
+                </div>
+                <div className="admin-day-detail">
+                  <h3 className="admin-subtitle">{selectedEventDate ? fmtDate(selectedEventDate) : 'Seleccioná un día'}</h3>
+                  {!selectedEventDate && <p className="admin-empty-inline">Marcá una fecha en el calendario.</p>}
+                  {selectedEventDate && eventsOnSelectedDay.length === 0 && (
+                    <p className="admin-empty-inline">No hay eventos grupales este día.</p>
+                  )}
+                  <ul className="admin-day-list">
+                    {eventsOnSelectedDay.map((ev) => (
+                      <li key={ev.id} className="admin-day-item">
+                        <div className="admin-day-item-head">
+                          <strong>{ev.title}</strong>
+                          <span className="badge badge-confirmed">{ev.vote_count ?? 0} votos</span>
+                        </div>
+                        <p className="admin-day-item-meta">
+                          {ev.start_time} – {ev.end_time} hs
+                        </p>
+                        {ev.description ? <p className="admin-day-item-notes">{ev.description}</p> : null}
+                        <div className="actions-inline admin-row-actions">
+                          {(ev.vote_count ?? 0) > 0 ? (
+                            <button type="button" className="btn btn-ghost btn-icon" onClick={() => openVotersDialog(ev)}>
+                              Ver votos
+                            </button>
+                          ) : null}
+                          <button type="button" className="btn btn-danger btn-icon" onClick={() => deleteEvent(ev.id)}>
+                            Eliminar
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {eventsPast.length > 0 && (
+                <div className="admin-events-history">
+                  <button
+                    type="button"
+                    className="btn btn-ghost admin-history-toggle"
+                    aria-expanded={showEventHistory}
+                    onClick={() => setShowEventHistory((v) => !v)}
+                  >
+                    {showEventHistory ? 'Ocultar historial de eventos' : 'Ver historial de eventos'}
+                    <span className="admin-history-count">({eventsPast.length})</span>
+                  </button>
+                  {showEventHistory && (
+                    <div className="table-wrap admin-history-table">
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>Fecha</th>
+                            <th>Horario</th>
+                            <th>Título</th>
+                            <th>Votos</th>
+                            <th>Detalle votos</th>
+                            <th />
+                          </tr>
+                        </thead>
+                        <tbody>{renderEventRows(eventsPast)}</tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === 'new-event' && (
+            <div className="admin-card">
+              <h2>Nuevo evento</h2>
+              <p className="admin-lead">Cargá una propuesta grupal. En el sitio se publica desde hoy en adelante para que la voten.</p>
               <form onSubmit={submitEvent} className="admin-form-section">
-                <h3 className="admin-subtitle">Nuevo evento</h3>
                 <div className="form-group">
                   <label>Título *</label>
                   <input name="title" required />
@@ -534,7 +642,10 @@ export function AdminDashboard() {
                       type="date"
                       required
                       value={eventFormDate}
-                      onChange={(e) => setEventFormDate(e.target.value)}
+                      onChange={(e) => {
+                        setEventFormDate(e.target.value);
+                        if (e.target.value) pickEventDate(e.target.value);
+                      }}
                     />
                   </div>
                   <div className="form-group">
@@ -570,67 +681,6 @@ export function AdminDashboard() {
                   Guardar evento
                 </button>
               </form>
-
-              <h3 className="admin-subtitle">Propuestas publicadas</h3>
-              <p className="admin-lead">
-                En el sitio se muestran eventos de hoy en adelante. Los visitantes votan cuáles les interesan más.
-              </p>
-              <div className="table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Horario</th>
-                      <th>Título</th>
-                      <th>Votos</th>
-                      <th>Detalle votos</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {eventsUpcoming.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="admin-empty">
-                          No hay eventos vigentes (desde hoy).
-                        </td>
-                      </tr>
-                    ) : (
-                      renderEventRows(eventsUpcoming)
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {eventsPast.length > 0 && (
-                <div className="admin-events-history">
-                  <button
-                    type="button"
-                    className="btn btn-ghost admin-history-toggle"
-                    aria-expanded={showEventHistory}
-                    onClick={() => setShowEventHistory((v) => !v)}
-                  >
-                    {showEventHistory ? 'Ocultar historial de eventos' : 'Ver historial de eventos'}
-                    <span className="admin-history-count">({eventsPast.length})</span>
-                  </button>
-                  {showEventHistory && (
-                    <div className="table-wrap admin-history-table">
-                      <table className="data-table">
-                        <thead>
-                          <tr>
-                            <th>Fecha</th>
-                            <th>Horario</th>
-                            <th>Título</th>
-                            <th>Votos</th>
-                            <th>Detalle votos</th>
-                            <th />
-                          </tr>
-                        </thead>
-                        <tbody>{renderEventRows(eventsPast)}</tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
