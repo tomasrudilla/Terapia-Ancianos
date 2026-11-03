@@ -36,7 +36,7 @@ function monthStart(d) {
 const TABS = [
   { id: 'new-event', label: 'Nuevo evento' },
   { id: 'bookings', label: 'Reservas individuales' },
-  { id: 'event-reservations', label: 'Reservas eventos' },
+  { id: 'event-reservations', label: 'Votos eventos' },
   { id: 'blocks', label: 'Bloqueos' },
 ];
 
@@ -508,7 +508,7 @@ export function AdminDashboard() {
 
           {tab === 'event-reservations' && (
             <div className="admin-card">
-              <h2>Reservas eventos grupales</h2>
+              <h2>Votos eventos</h2>
               <p className="admin-lead">
                 Elegí un día en el calendario para ver propuestas publicadas, votos y gestionar cada evento.
               </p>
