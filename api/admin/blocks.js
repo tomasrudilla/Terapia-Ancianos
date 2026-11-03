@@ -8,12 +8,21 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const from = req.query?.from || new Date().toISOString().slice(0, 8) + '01';
-      const to = req.query?.to || new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10);
-      const blocks = await withDb((sql) => sql`
-        SELECT * FROM blocked_slots WHERE block_date BETWEEN ${from} AND ${to}
-        ORDER BY block_date, start_time
-      `);
+      const all = req.query?.all === '1' || req.query?.all === 'true';
+      const blocks = all
+        ? await withDb((sql) => sql`
+            SELECT * FROM blocked_slots
+            ORDER BY block_date DESC, start_time DESC
+            LIMIT 300
+          `)
+        : await withDb((sql) => {
+            const from = req.query?.from || new Date().toISOString().slice(0, 8) + '01';
+            const to = req.query?.to || new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10);
+            return sql`
+              SELECT * FROM blocked_slots WHERE block_date BETWEEN ${from} AND ${to}
+              ORDER BY block_date, start_time
+            `;
+          });
       return json(res, 200, { blocks });
     }
 

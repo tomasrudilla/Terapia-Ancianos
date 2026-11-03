@@ -18,6 +18,7 @@ export function MonthCalendar({
   selectedDate,
   onSelectDate,
   eventsOnly = false,
+  adminMode = false,
 }) {
   const year = view.getFullYear();
   const month = view.getMonth();
@@ -34,10 +35,11 @@ export function MonthCalendar({
     const dateStr = fmtDate(year, month, day);
     const dow = new Date(year, month, day).getDay() || 7;
     const isPast = dateStr < todayStr;
-    const disabled =
-      isPast ||
-      !WORK_DAYS.includes(dow) ||
-      (eventsOnly && !daysWithEvents.has(dateStr));
+    const disabled = adminMode
+      ? false
+      : isPast ||
+        !WORK_DAYS.includes(dow) ||
+        (eventsOnly && !daysWithEvents.has(dateStr));
 
     const cls = [
       'cal-day',

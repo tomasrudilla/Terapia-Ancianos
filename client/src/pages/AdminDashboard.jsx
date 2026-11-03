@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import { MonthCalendar } from '../components/MonthCalendar';
 import { apiDelete, apiGetAdmin, apiPost, clearAdminToken, getAdminToken } from '../api';
 
 function fmtDate(iso) {
@@ -25,6 +26,12 @@ function fmtDateTime(iso) {
   });
 }
 
+function monthStart(d) {
+  const x = new Date(d);
+  x.setDate(1);
+  return x;
+}
+
 const TABS = [
   { id: 'overview', label: 'Resumen' },
   { id: 'bookings', label: 'Reservas individuales' },
@@ -36,26 +43,28 @@ const TABS = [
 export function AdminDashboard() {
   const token = getAdminToken();
   const [tab, setTab] = useState('overview');
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
-  const [allBookings, setAllBookings] = useState(false);
+  const [overviewStats, setOverviewStats] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [registrations, setRegistrations] = useState([]);
   const [events, setEvents] = useState([]);
   const [blocks, setBlocks] = useState([]);
+  const [bookingCalView, setBookingCalView] = useState(() => monthStart(new Date()));
+  const [regCalView, setRegCalView] = useState(() => monthStart(new Date()));
+  const [selectedBookingDate, setSelectedBookingDate] = useState(null);
+  const [selectedRegDate, setSelectedRegDate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
 
+  const loadOverview = useCallback(async () => {
+    const data = await apiGetAdmin('/api/admin/overview');
+    setOverviewStats(data.stats || null);
+  }, []);
+
   const loadBookings = useCallback(async () => {
-    let path = '/api/admin/bookings?all=1';
-    if (!allBookings) {
-      const [y, m] = month.split('-').map(Number);
-      const last = new Date(y, m, 0).getDate();
-      path = `/api/admin/bookings?from=${month}-01&to=${month}-${String(last).padStart(2, '0')}`;
-    }
-    const data = await apiGetAdmin(path);
+    const data = await apiGetAdmin('/api/admin/bookings?all=1');
     setBookings(data.bookings || []);
-  }, [allBookings, month]);
+  }, []);
 
   const loadRegistrations = useCallback(async () => {
     const data = await apiGetAdmin('/api/admin/registrations');
@@ -68,7 +77,7 @@ export function AdminDashboard() {
   }, []);
 
   const loadBlocks = useCallback(async () => {
-    const data = await apiGetAdmin('/api/admin/blocks');
+    const data = await apiGetAdmin('/api/admin/blocks?all=1');
     setBlocks(data.blocks || []);
   }, []);
 
@@ -76,35 +85,42 @@ export function AdminDashboard() {
     setLoading(true);
     setError('');
     try {
-      await Promise.all([loadBookings(), loadRegistrations(), loadEvents(), loadBlocks()]);
+      await Promise.all([loadOverview(), loadBookings(), loadRegistrations(), loadEvents(), loadBlocks()]);
     } catch (err) {
       setError(err.message || 'No se pudo cargar el panel');
     } finally {
       setLoading(false);
     }
-  }, [loadBookings, loadRegistrations, loadEvents, loadBlocks]);
+  }, [loadOverview, loadBookings, loadRegistrations, loadEvents, loadBlocks]);
 
   useEffect(() => {
     if (!token) return;
     refresh();
   }, [token, refresh]);
 
-  useEffect(() => {
-    if (!token) return;
-    loadBookings().catch((err) => setError(err.message));
-  }, [token, loadBookings]);
+  const daysWithBookings = useMemo(() => {
+    const set = new Set();
+    bookings.forEach((b) => set.add(b.booking_date));
+    return set;
+  }, [bookings]);
 
-  const stats = useMemo(() => {
-    const confirmed = bookings.filter((b) => b.status === 'confirmed');
-    const cancelled = bookings.filter((b) => b.status === 'cancelled');
-    const upcomingEvents = events.filter((e) => e.event_date >= new Date().toISOString().slice(0, 10));
-    return {
-      confirmed: confirmed.length,
-      cancelled: cancelled.length,
-      registrations: registrations.length,
-      upcomingEvents: upcomingEvents.length,
-    };
-  }, [bookings, registrations, events]);
+  const daysWithRegistrations = useMemo(() => {
+    const set = new Set();
+    registrations.forEach((r) => set.add(r.event_date));
+    return set;
+  }, [registrations]);
+
+  const bookingsOnSelectedDay = useMemo(() => {
+    if (!selectedBookingDate) return [];
+    return bookings
+      .filter((b) => b.booking_date === selectedBookingDate)
+      .sort((a, b) => a.booking_time.localeCompare(b.booking_time));
+  }, [bookings, selectedBookingDate]);
+
+  const registrationsOnSelectedDay = useMemo(() => {
+    if (!selectedRegDate) return [];
+    return registrations.filter((r) => r.event_date === selectedRegDate);
+  }, [registrations, selectedRegDate]);
 
   if (!token) return <Navigate to="/admin/login" replace />;
 
@@ -116,14 +132,14 @@ export function AdminDashboard() {
   const updateBooking = async (id, status) => {
     await apiPost('/api/admin/bookings', { id, status }, true);
     setMsg(status === 'confirmed' ? 'Reserva reactivada' : 'Reserva cancelada');
-    loadBookings();
+    await Promise.all([loadBookings(), loadOverview()]);
   };
 
   const deleteBooking = async (id) => {
     if (!confirm('¿Eliminar esta reserva permanentemente?')) return;
     await apiDelete('/api/admin/bookings', { id });
     setMsg('Reserva eliminada');
-    loadBookings();
+    await Promise.all([loadBookings(), loadOverview()]);
   };
 
   const submitEvent = async (e) => {
@@ -145,7 +161,7 @@ export function AdminDashboard() {
     );
     setMsg('Evento creado');
     e.target.reset();
-    loadEvents();
+    await Promise.all([loadEvents(), loadOverview(), loadRegistrations()]);
   };
 
   const submitBlock = async (e) => {
@@ -163,25 +179,47 @@ export function AdminDashboard() {
     );
     setMsg('Horario bloqueado');
     e.target.reset();
-    loadBlocks();
+    await Promise.all([loadBlocks(), loadOverview()]);
+  };
+
+  const pickBookingDate = (dateStr) => {
+    setSelectedBookingDate(dateStr);
+    const [y, m] = dateStr.split('-').map(Number);
+    setBookingCalView(new Date(y, m - 1, 1));
+  };
+
+  const pickRegDate = (dateStr) => {
+    setSelectedRegDate(dateStr);
+    const [y, m] = dateStr.split('-').map(Number);
+    setRegCalView(new Date(y, m - 1, 1));
   };
 
   return (
     <div className="admin-body">
       <header className="admin-header">
         <div className="container admin-header-inner">
-          <Link to="/admin" className="logo">
+          <Link to="/admin" className="logo admin-header-logo">
             <span className="logo-mark" />
             <span>Espacio Calma</span>
           </Link>
-          <div className="actions-inline admin-header-actions">
-            <span className="admin-badge">Administrador</span>
-            <Link to="/" className="btn btn-ghost btn-icon">
-              Ver sitio
-            </Link>
-            <button type="button" className="btn btn-secondary btn-icon" onClick={logout}>
-              Salir
-            </button>
+          <div className="admin-header-toolbar">
+            <div className="admin-header-identity">
+              <span className="admin-header-avatar" aria-hidden="true">
+                R
+              </span>
+              <div className="admin-header-identity-text">
+                <span className="admin-header-role">Administrador</span>
+                <span className="admin-header-name">Romina Cruces</span>
+              </div>
+            </div>
+            <div className="admin-header-actions">
+              <Link to="/" className="btn btn-secondary btn-small">
+                Ver sitio
+              </Link>
+              <button type="button" className="btn btn-ghost btn-small admin-btn-logout" onClick={logout}>
+                Salir
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -212,36 +250,36 @@ export function AdminDashboard() {
               </button>
             </div>
           )}
-          {loading && <p className="admin-loading">Cargando datos…</p>}
+          {loading && <p className="admin-loading">Cargando datos desde la base…</p>}
 
           {tab === 'overview' && (
             <div className="admin-card">
               <h2>Resumen</h2>
-              <p className="admin-lead">Vista rápida de reservas, inscripciones y eventos.</p>
+              <p className="admin-lead">Totales en tiempo real desde Neon.</p>
               <div className="admin-stats">
                 <div className="admin-stat">
-                  <span className="admin-stat-value">{stats.confirmed}</span>
-                  <span className="admin-stat-label">Reservas confirmadas {allBookings ? '(todas)' : `(mes ${month})`}</span>
+                  <span className="admin-stat-value">{overviewStats?.bookings_confirmed ?? '—'}</span>
+                  <span className="admin-stat-label">Reservas confirmadas</span>
                 </div>
                 <div className="admin-stat">
-                  <span className="admin-stat-value">{stats.cancelled}</span>
+                  <span className="admin-stat-value">{overviewStats?.bookings_cancelled ?? '—'}</span>
                   <span className="admin-stat-label">Reservas canceladas</span>
                 </div>
                 <div className="admin-stat">
-                  <span className="admin-stat-value">{stats.registrations}</span>
+                  <span className="admin-stat-value">{overviewStats?.registrations_total ?? '—'}</span>
                   <span className="admin-stat-label">Inscripciones a eventos</span>
                 </div>
                 <div className="admin-stat">
-                  <span className="admin-stat-value">{stats.upcomingEvents}</span>
-                  <span className="admin-stat-label">Eventos con fecha futura</span>
+                  <span className="admin-stat-value">{overviewStats?.events_upcoming ?? '—'}</span>
+                  <span className="admin-stat-label">Eventos futuros</span>
                 </div>
               </div>
               <div className="admin-overview-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setTab('bookings')}>
-                  Ver reservas
+                  Calendario de reservas
                 </button>
                 <button type="button" className="btn btn-secondary" onClick={() => setTab('registrations')}>
-                  Ver inscripciones
+                  Calendario de inscripciones
                 </button>
                 <button type="button" className="btn btn-ghost" onClick={refresh}>
                   Actualizar
@@ -253,84 +291,71 @@ export function AdminDashboard() {
           {tab === 'bookings' && (
             <div className="admin-card">
               <h2>Reservas de sesión individual</h2>
-              <div className="admin-toolbar">
-                <div className="form-group admin-toolbar-field">
-                  <label htmlFor="filter-month">Filtrar por mes</label>
-                  <input
-                    type="month"
-                    id="filter-month"
-                    value={month}
-                    disabled={allBookings}
-                    onChange={(e) => setMonth(e.target.value)}
+              <p className="admin-lead">Elegí un día en el calendario para ver turnos reservados (desde la base de datos).</p>
+              <div className="admin-calendar-layout">
+                <div className="calendar-panel admin-calendar-panel">
+                  <MonthCalendar
+                    adminMode
+                    view={bookingCalView}
+                    onPrev={() => setBookingCalView(new Date(bookingCalView.getFullYear(), bookingCalView.getMonth() - 1, 1))}
+                    onNext={() => setBookingCalView(new Date(bookingCalView.getFullYear(), bookingCalView.getMonth() + 1, 1))}
+                    daysWithSlots={daysWithBookings}
+                    selectedDate={selectedBookingDate}
+                    onSelectDate={pickBookingDate}
                   />
+                  <p className="calendar-legend">
+                    <span className="legend-dot legend-slot" /> Día con reserva
+                  </p>
                 </div>
-                <label className="admin-check">
-                  <input type="checkbox" checked={allBookings} onChange={(e) => setAllBookings(e.target.checked)} />
-                  Ver todas las reservas
-                </label>
-              </div>
-              <div className="table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Hora</th>
-                      <th>Persona</th>
-                      <th>Contacto</th>
-                      <th>Notas</th>
-                      <th>Estado</th>
-                      <th>Alta</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bookings.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="admin-empty">
-                          No hay reservas en este período.
-                        </td>
-                      </tr>
-                    ) : (
-                      bookings.map((b) => (
-                        <tr key={b.id}>
-                          <td>{fmtDate(b.booking_date)}</td>
-                          <td>{b.booking_time}</td>
-                          <td>{b.client_name}</td>
-                          <td>
-                            <a href={`mailto:${b.client_email}`}>{b.client_email}</a>
-                            {b.client_phone ? (
-                              <>
-                                <br />
-                                <a href={`tel:${b.client_phone}`}>{b.client_phone}</a>
-                              </>
-                            ) : null}
-                          </td>
-                          <td className="admin-notes">{b.notes || '—'}</td>
-                          <td>
-                            <span className={`badge badge-${b.status === 'confirmed' ? 'confirmed' : 'block'}`}>
-                              {b.status === 'confirmed' ? 'Confirmada' : 'Cancelada'}
-                            </span>
-                          </td>
-                          <td className="admin-muted">{fmtDateTime(b.created_at)}</td>
-                          <td className="actions-inline admin-row-actions">
-                            {b.status === 'confirmed' ? (
-                              <button type="button" className="btn btn-ghost btn-icon" onClick={() => updateBooking(b.id, 'cancelled')}>
-                                Cancelar
-                              </button>
-                            ) : (
-                              <button type="button" className="btn btn-ghost btn-icon" onClick={() => updateBooking(b.id, 'confirmed')}>
-                                Reactivar
-                              </button>
-                            )}
-                            <button type="button" className="btn btn-danger btn-icon" onClick={() => deleteBooking(b.id)}>
-                              Eliminar
+                <div className="admin-day-detail">
+                  <h3 className="admin-subtitle">
+                    {selectedBookingDate ? fmtDate(selectedBookingDate) : 'Seleccioná un día'}
+                  </h3>
+                  {!selectedBookingDate && (
+                    <p className="admin-empty-inline">Marcá una fecha en el calendario.</p>
+                  )}
+                  {selectedBookingDate && bookingsOnSelectedDay.length === 0 && (
+                    <p className="admin-empty-inline">No hay reservas este día.</p>
+                  )}
+                  <ul className="admin-day-list">
+                    {bookingsOnSelectedDay.map((b) => (
+                      <li key={b.id} className="admin-day-item">
+                        <div className="admin-day-item-head">
+                          <strong>{b.booking_time}</strong>
+                          <span className={`badge badge-${b.status === 'confirmed' ? 'confirmed' : 'block'}`}>
+                            {b.status === 'confirmed' ? 'Confirmada' : 'Cancelada'}
+                          </span>
+                        </div>
+                        <p className="admin-day-item-name">{b.client_name}</p>
+                        <p className="admin-day-item-meta">
+                          <a href={`mailto:${b.client_email}`}>{b.client_email}</a>
+                          {b.client_phone ? (
+                            <>
+                              {' · '}
+                              <a href={`tel:${b.client_phone}`}>{b.client_phone}</a>
+                            </>
+                          ) : null}
+                        </p>
+                        {b.notes ? <p className="admin-day-item-notes">{b.notes}</p> : null}
+                        <p className="admin-muted">Alta: {fmtDateTime(b.created_at)}</p>
+                        <div className="actions-inline admin-row-actions">
+                          {b.status === 'confirmed' ? (
+                            <button type="button" className="btn btn-ghost btn-icon" onClick={() => updateBooking(b.id, 'cancelled')}>
+                              Cancelar
                             </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                          ) : (
+                            <button type="button" className="btn btn-ghost btn-icon" onClick={() => updateBooking(b.id, 'confirmed')}>
+                              Reactivar
+                            </button>
+                          )}
+                          <button type="button" className="btn btn-danger btn-icon" onClick={() => deleteBooking(b.id)}>
+                            Eliminar
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           )}
@@ -338,50 +363,52 @@ export function AdminDashboard() {
           {tab === 'registrations' && (
             <div className="admin-card">
               <h2>Inscripciones a eventos grupales</h2>
-              <p className="admin-lead">Todas las personas inscriptas, con evento y contacto.</p>
-              <div className="table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Evento</th>
-                      <th>Fecha</th>
-                      <th>Horario</th>
-                      <th>Participante</th>
-                      <th>Contacto</th>
-                      <th>Inscripto el</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {registrations.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="admin-empty">
-                          Todavía no hay inscripciones.
-                        </td>
-                      </tr>
-                    ) : (
-                      registrations.map((r) => (
-                        <tr key={r.id}>
-                          <td>{r.event_title}</td>
-                          <td>{fmtDate(r.event_date)}</td>
-                          <td>
-                            {r.start_time} – {r.end_time}
-                          </td>
-                          <td>{r.participant_name}</td>
-                          <td>
-                            <a href={`mailto:${r.participant_email}`}>{r.participant_email}</a>
-                            {r.participant_phone ? (
-                              <>
-                                <br />
-                                <a href={`tel:${r.participant_phone}`}>{r.participant_phone}</a>
-                              </>
-                            ) : null}
-                          </td>
-                          <td className="admin-muted">{fmtDateTime(r.created_at)}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+              <p className="admin-lead">Días con eventos que tienen inscriptos (datos en Neon).</p>
+              <div className="admin-calendar-layout">
+                <div className="calendar-panel admin-calendar-panel">
+                  <MonthCalendar
+                    adminMode
+                    view={regCalView}
+                    onPrev={() => setRegCalView(new Date(regCalView.getFullYear(), regCalView.getMonth() - 1, 1))}
+                    onNext={() => setRegCalView(new Date(regCalView.getFullYear(), regCalView.getMonth() + 1, 1))}
+                    daysWithEvents={daysWithRegistrations}
+                    selectedDate={selectedRegDate}
+                    onSelectDate={pickRegDate}
+                  />
+                  <p className="calendar-legend">
+                    <span className="legend-dot legend-event" /> Día con inscripciones
+                  </p>
+                </div>
+                <div className="admin-day-detail">
+                  <h3 className="admin-subtitle">{selectedRegDate ? fmtDate(selectedRegDate) : 'Seleccioná un día'}</h3>
+                  {!selectedRegDate && <p className="admin-empty-inline">Marcá una fecha en el calendario.</p>}
+                  {selectedRegDate && registrationsOnSelectedDay.length === 0 && (
+                    <p className="admin-empty-inline">No hay inscripciones en eventos de este día.</p>
+                  )}
+                  <ul className="admin-day-list">
+                    {registrationsOnSelectedDay.map((r) => (
+                      <li key={r.id} className="admin-day-item">
+                        <div className="admin-day-item-head">
+                          <strong>{r.event_title}</strong>
+                        </div>
+                        <p className="admin-day-item-meta">
+                          {r.start_time} – {r.end_time} hs
+                        </p>
+                        <p className="admin-day-item-name">{r.participant_name}</p>
+                        <p className="admin-day-item-meta">
+                          <a href={`mailto:${r.participant_email}`}>{r.participant_email}</a>
+                          {r.participant_phone ? (
+                            <>
+                              {' · '}
+                              <a href={`tel:${r.participant_phone}`}>{r.participant_phone}</a>
+                            </>
+                          ) : null}
+                        </p>
+                        <p className="admin-muted">Inscripto: {fmtDateTime(r.created_at)}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           )}
@@ -438,7 +465,7 @@ export function AdminDashboard() {
                 </button>
               </form>
 
-              <h3 className="admin-subtitle">Listado de eventos</h3>
+              <h3 className="admin-subtitle">Eventos en la base ({events.length})</h3>
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
@@ -494,8 +521,7 @@ export function AdminDashboard() {
                                 if (!confirm('¿Eliminar evento e inscripciones?')) return;
                                 await apiDelete('/api/admin/events', { id: ev.id });
                                 setMsg('Evento eliminado');
-                                loadEvents();
-                                loadRegistrations();
+                                await Promise.all([loadEvents(), loadRegistrations(), loadOverview()]);
                               }}
                             >
                               Eliminar
@@ -513,7 +539,7 @@ export function AdminDashboard() {
           {tab === 'blocks' && (
             <div className="admin-card">
               <h2>Bloquear horarios</h2>
-              <p className="admin-lead">Impide reservas individuales en franjas puntuales (vacaciones, permisos, etc.).</p>
+              <p className="admin-lead">Impide reservas individuales en franjas puntuales.</p>
               <form onSubmit={submitBlock} className="admin-form-section">
                 <div className="form-row">
                   <div className="form-group">
@@ -540,7 +566,7 @@ export function AdminDashboard() {
                 </button>
               </form>
 
-              <h3 className="admin-subtitle">Bloqueos activos</h3>
+              <h3 className="admin-subtitle">Bloqueos en la base ({blocks.length})</h3>
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
@@ -573,7 +599,7 @@ export function AdminDashboard() {
                               onClick={async () => {
                                 await apiDelete('/api/admin/blocks', { id: bl.id });
                                 setMsg('Bloqueo eliminado');
-                                loadBlocks();
+                                await Promise.all([loadBlocks(), loadOverview()]);
                               }}
                             >
                               Eliminar
