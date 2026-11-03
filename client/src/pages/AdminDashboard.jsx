@@ -34,10 +34,9 @@ function monthStart(d) {
 }
 
 const TABS = [
-  { id: 'overview', label: 'Resumen' },
+  { id: 'new-event', label: 'Nuevo evento' },
   { id: 'bookings', label: 'Reservas individuales' },
   { id: 'event-reservations', label: 'Reservas eventos' },
-  { id: 'new-event', label: 'Nuevo evento' },
   { id: 'blocks', label: 'Bloqueos' },
 ];
 
@@ -117,8 +116,7 @@ function AdminConfirmDialog({ dialog, onCancel, onConfirm }) {
 
 export function AdminDashboard() {
   const token = getAdminToken();
-  const [tab, setTab] = useState('overview');
-  const [overviewStats, setOverviewStats] = useState(null);
+  const [tab, setTab] = useState('new-event');
   const [bookings, setBookings] = useState([]);
   const [events, setEvents] = useState([]);
   const [blocks, setBlocks] = useState([]);
@@ -133,11 +131,6 @@ export function AdminDashboard() {
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const [confirmDialog, setConfirmDialog] = useState(null);
-
-  const loadOverview = useCallback(async () => {
-    const data = await apiGetAdmin('/api/admin/overview');
-    setOverviewStats(data.stats || null);
-  }, []);
 
   const loadBookings = useCallback(async () => {
     const data = await apiGetAdmin('/api/admin/bookings?all=1');
@@ -158,18 +151,32 @@ export function AdminDashboard() {
     setLoading(true);
     setError('');
     try {
-      await Promise.all([loadOverview(), loadBookings(), loadEvents(), loadBlocks()]);
+      await Promise.all([loadBookings(), loadEvents(), loadBlocks()]);
     } catch (err) {
       setError(err.message || 'No se pudo cargar el panel');
     } finally {
       setLoading(false);
     }
-  }, [loadOverview, loadBookings, loadEvents, loadBlocks]);
+  }, [loadBookings, loadEvents, loadBlocks]);
 
   useEffect(() => {
     if (!token) return;
     refresh();
   }, [token, refresh]);
+
+  useEffect(() => {
+    const today = todayISOInTimezone();
+    if (tab === 'bookings') {
+      setSelectedBookingDate(today);
+      const [y, m] = today.split('-').map(Number);
+      setBookingCalView(new Date(y, m - 1, 1));
+    }
+    if (tab === 'event-reservations') {
+      setSelectedEventDate(today);
+      const [y, m] = today.split('-').map(Number);
+      setEventCalView(new Date(y, m - 1, 1));
+    }
+  }, [tab]);
 
   useEffect(() => {
     if (!confirmDialog && !votersDialog) return;
@@ -247,7 +254,7 @@ export function AdminDashboard() {
   const updateBooking = async (id, status) => {
     await apiPost('/api/admin/bookings', { id, status }, true);
     setMsg(status === 'confirmed' ? 'Reserva reactivada' : 'Reserva cancelada');
-    await Promise.all([loadBookings(), loadOverview()]);
+    await loadBookings();
   };
 
   const deleteBooking = (id) => {
@@ -257,7 +264,7 @@ export function AdminDashboard() {
       onConfirm: async () => {
         await apiDelete('/api/admin/bookings', { id });
         setMsg('Reserva eliminada');
-        await Promise.all([loadBookings(), loadOverview()]);
+        await loadBookings();
       },
     });
   };
@@ -283,7 +290,7 @@ export function AdminDashboard() {
     setMsg('Evento creado');
     e.target.reset();
     setEventFormDate('');
-    await Promise.all([loadEvents(), loadOverview()]);
+    await loadEvents();
     if (createdDate) {
       setTab('event-reservations');
       pickEventDate(String(createdDate));
@@ -305,7 +312,7 @@ export function AdminDashboard() {
     );
     setMsg('Horario bloqueado');
     e.target.reset();
-    await Promise.all([loadBlocks(), loadOverview()]);
+    await loadBlocks();
   };
 
   const pickBookingDate = (dateStr) => {
@@ -335,7 +342,7 @@ export function AdminDashboard() {
       onConfirm: async () => {
         await apiDelete('/api/admin/events', { id });
         setMsg('Evento eliminado');
-        await Promise.all([loadEvents(), loadOverview()]);
+        await loadEvents();
       },
     });
   };
@@ -426,41 +433,6 @@ export function AdminDashboard() {
             </div>
           )}
           {loading && <p className="admin-loading">Cargando…</p>}
-
-          {tab === 'overview' && (
-            <div className="admin-card">
-              <h2>Resumen</h2>
-              <div className="admin-stats">
-                <div className="admin-stat">
-                  <span className="admin-stat-value">{overviewStats?.bookings_confirmed ?? '—'}</span>
-                  <span className="admin-stat-label">Reservas confirmadas</span>
-                </div>
-                <div className="admin-stat">
-                  <span className="admin-stat-value">{overviewStats?.bookings_cancelled ?? '—'}</span>
-                  <span className="admin-stat-label">Reservas canceladas</span>
-                </div>
-                <div className="admin-stat">
-                  <span className="admin-stat-value">{overviewStats?.votes_total ?? '—'}</span>
-                  <span className="admin-stat-label">Votos en eventos</span>
-                </div>
-                <div className="admin-stat">
-                  <span className="admin-stat-value">{overviewStats?.events_upcoming ?? '—'}</span>
-                  <span className="admin-stat-label">Eventos futuros</span>
-                </div>
-              </div>
-              <div className="admin-overview-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setTab('bookings')}>
-                  Calendario de reservas
-                </button>
-                <button type="button" className="btn btn-secondary" onClick={() => setTab('event-reservations')}>
-                  Reservas eventos
-                </button>
-                <button type="button" className="btn btn-ghost" onClick={refresh}>
-                  Actualizar
-                </button>
-              </div>
-            </div>
-          )}
 
           {tab === 'bookings' && (
             <div className="admin-card">
@@ -747,7 +719,7 @@ export function AdminDashboard() {
                               onClick={async () => {
                                 await apiDelete('/api/admin/blocks', { id: bl.id });
                                 setMsg('Bloqueo eliminado');
-                                await Promise.all([loadBlocks(), loadOverview()]);
+                                await loadBlocks();
                               }}
                             >
                               Eliminar
