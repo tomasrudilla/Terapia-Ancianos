@@ -18,10 +18,14 @@ export function Nav() {
 
   const isHome = location.pathname === '/' || location.pathname === '/inicio';
 
-  const goHomeSection = (sectionId) => (e) => {
-    e.preventDefault();
+  const closeMenu = () => {
     setOpen(false);
     setInicioOpen(false);
+  };
+
+  const goHomeSection = (sectionId) => (e) => {
+    e.preventDefault();
+    closeMenu();
 
     const hashPath = sectionId === 'portada' ? '/' : `/#${sectionId}`;
 
@@ -39,8 +43,7 @@ export function Nav() {
   };
 
   useEffect(() => {
-    setOpen(false);
-    setInicioOpen(false);
+    closeMenu();
   }, [location.pathname]);
 
   useEffect(() => {
@@ -50,10 +53,7 @@ export function Nav() {
 
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') {
-        setOpen(false);
-        setInicioOpen(false);
-      }
+      if (e.key === 'Escape') closeMenu();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -70,11 +70,7 @@ export function Nav() {
 
   const hashSection = isHome ? homeSectionFromHash(location.hash) : '';
   const adminPath = getAdminToken() ? '/admin' : '/admin/login';
-
-  const homeLinkClass = (sectionId, foot = false) => {
-    const active = hashSection === sectionId || (sectionId === 'portada' && hashSection === 'portada');
-    return `nav-link${foot ? ' nav-link-foot' : ''}${active ? ' is-active' : ''}`;
-  };
+  const portadaActive = isHome && hashSection === 'portada';
 
   return (
     <header className="site-header">
@@ -88,86 +84,110 @@ export function Nav() {
               />
             </svg>
           </Link>
-          <Link to="/" className="logo">
+          <Link to="/" className="logo" onClick={closeMenu}>
             <span className="logo-mark" aria-hidden="true" />
             <span>Espacio Calma</span>
           </Link>
         </div>
 
         <nav className={`main-nav ${open ? 'open' : ''}`} id="main-nav" aria-label="Principal">
-          <div className="nav-links">
-            <div className="nav-mobile-home" aria-label="Secciones del inicio">
-              {HOME_SECTION_LINKS.map((item) => (
-                <Link
-                  key={item.id}
-                  to={item.id === 'portada' ? '/' : `/#${item.id}`}
-                  className={homeLinkClass(item.id, item.foot)}
-                  onClick={goHomeSection(item.id)}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-
-            <div className="nav-dropdown nav-desktop-dropdown">
-              <button
-                type="button"
-                className={`nav-dropdown-trigger${pageKey === 'inicio' ? ' is-active' : ''}`}
-                aria-expanded={inicioOpen}
-                onClick={() => setInicioOpen((v) => !v)}
-              >
-                Inicio
-                <span className="nav-chevron" aria-hidden="true" />
-              </button>
-              <div className={`nav-dropdown-panel${inicioOpen ? ' is-open' : ''}`}>
-                <p className="nav-dropdown-eyebrow">Secciones del inicio</p>
-                {HOME_SECTION_LINKS.map((item) => {
-                  const active =
-                    hashSection === item.id || (item.id === 'portada' && hashSection === 'portada');
-                  const cls = item.foot
-                    ? `nav-dropdown-foot${active ? ' is-active' : ''}`
-                    : active
-                      ? 'is-active'
-                      : '';
-                  return (
-                    <Link
-                      key={`desktop-${item.id}`}
-                      to={item.id === 'portada' ? '/' : `/#${item.id}`}
-                      className={cls || undefined}
-                      role="menuitem"
-                      onClick={goHomeSection(item.id)}
-                    >
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            <NavLink to="/experiencias" className={({ isActive }) => `nav-link${isActive ? ' is-active' : ''}`}>
+          <div className="nav-mobile-menu">
+            <Link
+              to="/"
+              className={`nav-mobile-item nav-mobile-text${portadaActive ? ' is-active' : ''}`}
+              onClick={goHomeSection('portada')}
+            >
+              Ver portada completa
+            </Link>
+            <NavLink
+              to="/experiencias"
+              className={({ isActive }) => `nav-mobile-item nav-mobile-text${isActive ? ' is-active' : ''}`}
+              onClick={closeMenu}
+            >
               Experiencias
             </NavLink>
-          </div>
-
-          <span className="nav-divider" aria-hidden="true" />
-
-          <div className="nav-actions">
             <NavLink
               to="/reservar"
               className={() =>
-                `btn btn-small${pageKey === 'eventos' ? ' btn-nav-alt' : ''}${pageKey === 'reservar' ? ' is-active' : ''}`
+                `nav-mobile-item btn btn-small nav-mobile-cta${pageKey === 'eventos' ? ' btn-nav-alt' : ''}${pageKey === 'reservar' ? ' is-active' : ''}`
               }
+              onClick={closeMenu}
             >
               Reservar sesión individual
             </NavLink>
             <NavLink
               to="/eventos"
               className={() =>
-                `btn btn-small${pageKey !== 'eventos' ? ' btn-nav-alt' : ''}${pageKey === 'eventos' ? ' is-active' : ''}`
+                `nav-mobile-item btn btn-small nav-mobile-cta btn-nav-alt${pageKey === 'eventos' ? ' is-active' : ''}`
               }
+              onClick={closeMenu}
             >
               Votar eventos grupales
             </NavLink>
+          </div>
+
+          <div className="nav-desktop-only">
+            <div className="nav-links">
+              <div className="nav-dropdown nav-desktop-dropdown">
+                <button
+                  type="button"
+                  className={`nav-dropdown-trigger${pageKey === 'inicio' ? ' is-active' : ''}`}
+                  aria-expanded={inicioOpen}
+                  onClick={() => setInicioOpen((v) => !v)}
+                >
+                  Inicio
+                  <span className="nav-chevron" aria-hidden="true" />
+                </button>
+                <div className={`nav-dropdown-panel${inicioOpen ? ' is-open' : ''}`}>
+                  <p className="nav-dropdown-eyebrow">Secciones del inicio</p>
+                  {HOME_SECTION_LINKS.map((item) => {
+                    const active =
+                      hashSection === item.id || (item.id === 'portada' && hashSection === 'portada');
+                    const cls = item.foot
+                      ? `nav-dropdown-foot${active ? ' is-active' : ''}`
+                      : active
+                        ? 'is-active'
+                        : '';
+                    return (
+                      <Link
+                        key={`desktop-${item.id}`}
+                        to={item.id === 'portada' ? '/' : `/#${item.id}`}
+                        className={cls || undefined}
+                        role="menuitem"
+                        onClick={goHomeSection(item.id)}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <NavLink to="/experiencias" className={({ isActive }) => `nav-link${isActive ? ' is-active' : ''}`}>
+                Experiencias
+              </NavLink>
+            </div>
+
+            <span className="nav-divider" aria-hidden="true" />
+
+            <div className="nav-actions">
+              <NavLink
+                to="/reservar"
+                className={() =>
+                  `btn btn-small${pageKey === 'eventos' ? ' btn-nav-alt' : ''}${pageKey === 'reservar' ? ' is-active' : ''}`
+                }
+              >
+                Reservar sesión individual
+              </NavLink>
+              <NavLink
+                to="/eventos"
+                className={() =>
+                  `btn btn-small${pageKey !== 'eventos' ? ' btn-nav-alt' : ''}${pageKey === 'eventos' ? ' is-active' : ''}`
+                }
+              >
+                Votar eventos grupales
+              </NavLink>
+            </div>
           </div>
         </nav>
 
