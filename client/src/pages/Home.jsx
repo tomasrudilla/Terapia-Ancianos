@@ -93,7 +93,16 @@ export function Home() {
 
       <section className="section" id="sobre-mi">
         <div className="container about-grid">
-          <div className="about-image" role="img" aria-label="Espacio terapéutico cálido y luminoso" />
+          <div className="about-image">
+            <img
+              src="/assets/img/romina-sobre-mi.jpg"
+              alt="Romina Cruces, acompañante terapéutica"
+              width={768}
+              height={1024}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
           <div className="about-content">
             <h2>Sobre mí...</h2>
             <p>

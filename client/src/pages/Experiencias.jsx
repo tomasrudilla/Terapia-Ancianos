@@ -1,10 +1,19 @@
 import { Link } from 'react-router-dom';
 import { experiencias } from '../experienciasData.js';
 
-function experienceAuthorLabel(name) {
-  const trimmed = (name ?? '').trim();
-  if (!trimmed || /^anónimo$/i.test(trimmed)) return 'Anónimo';
-  return trimmed;
+function PhoneFrame({ children }) {
+  return (
+    <div className="experience-phone experience-phone--iphone">
+      <span className="experience-phone-btn experience-phone-btn-silent" aria-hidden="true" />
+      <span className="experience-phone-btn experience-phone-btn-volume" aria-hidden="true" />
+      <span className="experience-phone-btn experience-phone-btn-power" aria-hidden="true" />
+      <div className="experience-phone-screen">
+        <div className="experience-phone-island" aria-hidden="true" />
+        {children}
+        <div className="experience-phone-home-bar" aria-hidden="true" />
+      </div>
+    </div>
+  );
 }
 
 export function Experiencias() {
@@ -19,18 +28,27 @@ export function Experiencias() {
       </section>
 
       <section className="section section-alt experiencias-section">
-        <div className="container experiencias-stack">
+        <div className="container experiencias-gallery">
           {experiencias.map((item) => (
-            <article key={item.slug} className="experience-card" id={item.slug}>
-              <div className="experience-body">
-                <p className="experience-author">{experienceAuthorLabel(item.name)}</p>
-                <div className="experience-story">
-                  {item.text.split('\n\n').map((paragraph, pi) => (
-                    <p key={`${item.slug}-${pi}`}>{paragraph}</p>
-                  ))}
-                </div>
-              </div>
-            </article>
+            <figure key={item.slug} className="experience-screenshot" id={item.slug}>
+              <PhoneFrame>
+                {item.src ? (
+                  <img src={item.src} alt={item.alt} loading="lazy" decoding="async" />
+                ) : (
+                  <div className="experience-phone-chat">
+                    <div className="experience-phone-bubble">
+                      {item.text.split('\n\n').map((paragraph, pi) => (
+                        <p key={`${item.slug}-${pi}`}>{paragraph}</p>
+                      ))}
+                      {item.footer ? <p className="experience-phone-bubble-footer">{item.footer}</p> : null}
+                    </div>
+                    {item.author ? (
+                      <p className="experience-phone-chat-author">{item.author}</p>
+                    ) : null}
+                  </div>
+                )}
+              </PhoneFrame>
+            </figure>
           ))}
         </div>
       </section>
