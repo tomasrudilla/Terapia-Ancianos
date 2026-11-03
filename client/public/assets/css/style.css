@@ -37,6 +37,17 @@ body {
   background: var(--bg);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+button,
+.btn,
+a.btn,
+input,
+select,
+textarea {
+  touch-action: manipulation;
 }
 
 img {
@@ -1862,6 +1873,9 @@ a:hover {
 
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  max-width: 100%;
 }
 
 table.data-table {
@@ -2542,7 +2556,10 @@ table.data-table th {
     padding: 0.95rem 1.25rem;
     font-size: 0.95rem;
     border-radius: 14px;
-    transform: none !important;
+  }
+
+  .hero-actions .btn-primary:active {
+    transform: scale(0.98);
   }
 
   .hero-actions .btn-primary {
@@ -2733,34 +2750,130 @@ table.data-table th {
     overflow-wrap: anywhere;
   }
 
+  .admin-body .container {
+    width: min(100% - 1.5rem, 1480px);
+  }
+
   .admin-layout {
     grid-template-columns: 1fr;
     gap: 1rem;
-    padding-bottom: 2.5rem;
+    padding: 1.25rem 0 2.5rem;
   }
 
   .admin-sidebar {
-    position: static;
-    padding: 0.65rem;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding: 0.5rem;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .admin-sidebar::-webkit-scrollbar {
+    display: none;
   }
 
   .admin-sidebar nav {
     flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 0.35rem;
-    min-width: min-content;
+    flex-wrap: wrap;
+    gap: 0.4rem;
   }
 
   .admin-sidebar button.tab-btn {
     white-space: nowrap;
     width: auto;
-    padding: 0.55rem 0.85rem;
-    font-size: 0.82rem;
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: calc(50% - 0.25rem);
+    text-align: center;
+    padding: 0.65rem 0.5rem;
+    font-size: 0.8rem;
+    min-height: 44px;
   }
 
   .admin-card {
-    padding: 1.25rem;
+    padding: 1.15rem 1rem;
+  }
+
+  .admin-card h2 {
+    font-size: 1.35rem;
+  }
+
+  .admin-form-section .btn-primary {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  table.data-table {
+    min-width: 520px;
+    font-size: 0.84rem;
+  }
+
+  table.data-table th,
+  table.data-table td {
+    padding: 0.55rem 0.45rem;
+  }
+
+  .admin-modal-overlay {
+    padding: max(0.75rem, env(safe-area-inset-top)) 0.75rem max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .admin-modal {
+    width: min(100%, 26rem);
+    max-height: min(88dvh, 32rem);
+    overflow-y: auto;
+  }
+
+  .events-poll-wrap {
+    max-width: none;
+    width: 100%;
+  }
+
+  .event-poll-card {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 1.1rem 1rem;
+  }
+
+  .event-poll-title {
+    font-size: 1.2rem;
+  }
+
+  .event-poll-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .events-poll-notice {
+    width: min(100%, 22rem);
+  }
+
+  .login-page {
+    padding: max(2rem, env(safe-area-inset-top)) 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+    align-items: flex-start;
+  }
+
+  .login-card {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .login-card .btn-primary {
+    min-height: 48px;
+  }
+
+  .header-brand {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .nav-admin-entry {
+    flex-shrink: 0;
+  }
+
+  .logo span:not(.logo-mark) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .admin-row-actions {
@@ -2768,23 +2881,47 @@ table.data-table th {
     align-items: stretch;
   }
 
+  .admin-header {
+    padding-top: max(0.65rem, env(safe-area-inset-top));
+  }
+
   .admin-header-inner {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding-top: 0.35rem;
+    padding-bottom: 0.65rem;
+  }
+
+  .admin-header-logo {
+    margin-left: 0;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .admin-header-logo span:not(.logo-mark) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .admin-header-toolbar {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    gap: 0.5rem;
   }
 
   .admin-header-actions {
-    width: 100%;
+    width: auto;
   }
 
   .admin-header-actions .btn {
-    flex: 1;
-    justify-content: center;
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 0.5rem 0.85rem;
   }
 
   .admin-calendar-layout {
@@ -3038,5 +3175,84 @@ table.data-table th {
   .card-title-compact {
     font-size: 1.28rem;
     line-height: 1.25;
+  }
+
+  .admin-sidebar button.tab-btn {
+    flex: 1 1 100%;
+    min-width: 100%;
+    font-size: 0.78rem;
+  }
+
+  .admin-header-identity-text {
+    display: none;
+  }
+
+  .admin-header-identity {
+    padding: 0.25rem;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .admin-day-item-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .admin-row-actions .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .event-poll-card {
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .event-poll-card .btn-primary {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .booking-layout {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0));
+  }
+
+  .alert {
+    font-size: 0.88rem;
+  }
+
+  .admin-alert-dismiss {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .experience-phone-bubble {
+    max-width: 100%;
+  }
+
+  .experience-facts-wide {
+    grid-template-columns: 1fr;
+  }
+
+  .about-image img {
+    width: 100%;
+    height: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .admin-sidebar button.tab-btn {
+    font-size: 0.72rem;
+    padding: 0.55rem 0.35rem;
+  }
+
+  .slots-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-weekdays span {
+    font-size: 0.58rem;
   }
 }
