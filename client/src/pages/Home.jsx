@@ -17,7 +17,7 @@ export function Home() {
                 Reservar sesión individual
               </Link>
               <Link to="/eventos" className="btn btn-secondary">
-                Unirme a evento grupal
+                Votar eventos grupales
               </Link>
             </div>
           </div>

@@ -142,7 +142,7 @@ export function Nav() {
               Reservar sesión individual
             </NavLink>
             <NavLink to="/eventos" className={({ isActive }) => `btn btn-small btn-nav-alt${isActive ? ' is-active' : ''}`}>
-              Unirme a evento grupal
+              Votar eventos grupales
             </NavLink>
           </div>
         </nav>

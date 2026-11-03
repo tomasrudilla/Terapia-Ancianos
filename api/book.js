@@ -1,6 +1,7 @@
 import { withDb } from '../lib/db.js';
 import { json, readJson } from '../lib/http.js';
 import { getAvailability } from '../lib/availability.js';
+import { sendBookingConfirmationEmails } from '../lib/mail.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Método no permitido' });
@@ -39,9 +40,23 @@ export default async function handler(req, res) {
         json(res, 409, { error: 'Ese horario acaba de ser reservado. Elegí otro.' });
         return;
       }
+
+      try {
+        await sendBookingConfirmationEmails({
+          booking_date: date,
+          booking_time: time,
+          client_name,
+          client_email,
+          client_phone,
+          notes,
+        });
+      } catch (mailErr) {
+        console.error('[book] email', mailErr);
+      }
+
       json(res, 200, {
         ok: true,
-        message: '¡Reserva confirmada! Te enviaremos un recordatorio por email.',
+        message: '¡Reserva confirmada! Te enviamos la confirmación por email.',
         booking: { date, time, name: client_name },
       });
     });

@@ -82,10 +82,8 @@ export function AdminDashboard() {
   const [blocks, setBlocks] = useState([]);
   const [bookingCalView, setBookingCalView] = useState(() => monthStart(new Date()));
   const [regCalView, setRegCalView] = useState(() => monthStart(new Date()));
-  const [eventCalView, setEventCalView] = useState(() => monthStart(new Date()));
   const [selectedBookingDate, setSelectedBookingDate] = useState(null);
   const [selectedRegDate, setSelectedRegDate] = useState(null);
-  const [selectedEventDate, setSelectedEventDate] = useState(null);
   const [eventFormDate, setEventFormDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -183,18 +181,15 @@ export function AdminDashboard() {
     return registrations.filter((r) => r.event_date === selectedRegDate);
   }, [registrations, selectedRegDate]);
 
-  const daysWithScheduledEvents = useMemo(() => {
-    const set = new Set();
-    events.forEach((ev) => set.add(ev.event_date));
-    return set;
-  }, [events]);
-
-  const eventsOnSelectedDay = useMemo(() => {
-    if (!selectedEventDate) return [];
-    return events
-      .filter((ev) => ev.event_date === selectedEventDate)
-      .sort((a, b) => a.start_time.localeCompare(b.start_time));
-  }, [events, selectedEventDate]);
+  const eventsSorted = useMemo(
+    () =>
+      [...events].sort((a, b) => {
+        const d = b.event_date.localeCompare(a.event_date);
+        if (d !== 0) return d;
+        return b.start_time.localeCompare(a.start_time);
+      }),
+    [events],
+  );
 
   if (!token) return <Navigate to="/admin/login" replace />;
 
@@ -238,15 +233,9 @@ export function AdminDashboard() {
       },
       true,
     );
-    const createdDate = fd.get('event_date');
     setMsg('Evento creado');
     e.target.reset();
     setEventFormDate('');
-    if (createdDate) {
-      setSelectedEventDate(String(createdDate));
-      const [y, m] = String(createdDate).split('-').map(Number);
-      setEventCalView(new Date(y, m - 1, 1));
-    }
     await Promise.all([loadEvents(), loadOverview(), loadRegistrations()]);
   };
 
@@ -278,13 +267,6 @@ export function AdminDashboard() {
     setSelectedRegDate(dateStr);
     const [y, m] = dateStr.split('-').map(Number);
     setRegCalView(new Date(y, m - 1, 1));
-  };
-
-  const pickEventDate = (dateStr) => {
-    setSelectedEventDate(dateStr);
-    setEventFormDate(dateStr);
-    const [y, m] = dateStr.split('-').map(Number);
-    setEventCalView(new Date(y, m - 1, 1));
   };
 
   const deleteEvent = (id) => {
@@ -572,75 +554,62 @@ export function AdminDashboard() {
                 </button>
               </form>
 
-              <h3 className="admin-subtitle">Calendario de eventos</h3>
-              <p className="admin-lead">Elegí un día para ver talleres y eventos. Al seleccionar una fecha también se completa el campo Fecha del formulario de arriba.</p>
-              <div className="admin-calendar-layout">
-                <div className="calendar-panel admin-calendar-panel">
-                  <MonthCalendar
-                    adminMode
-                    view={eventCalView}
-                    onPrev={() => setEventCalView(new Date(eventCalView.getFullYear(), eventCalView.getMonth() - 1, 1))}
-                    onNext={() => setEventCalView(new Date(eventCalView.getFullYear(), eventCalView.getMonth() + 1, 1))}
-                    daysWithEvents={daysWithScheduledEvents}
-                    selectedDate={selectedEventDate}
-                    onSelectDate={pickEventDate}
-                  />
-                  <p className="calendar-legend">
-                    <span className="legend-dot legend-event" /> Día con evento
-                  </p>
-                </div>
-                <div className="admin-day-detail">
-                  <h3 className="admin-subtitle">{selectedEventDate ? fmtDate(selectedEventDate) : 'Seleccioná un día'}</h3>
-                  {!selectedEventDate && <p className="admin-empty-inline">Marcá una fecha en el calendario.</p>}
-                  {selectedEventDate && eventsOnSelectedDay.length === 0 && (
-                    <p className="admin-empty-inline">No hay eventos este día.</p>
-                  )}
-                  <ul className="admin-day-list">
-                    {eventsOnSelectedDay.map((ev) => (
-                      <li key={ev.id} className="admin-day-item">
-                        <div className="admin-day-item-head">
-                          <strong>{ev.title}</strong>
-                          <span className="badge badge-confirmed">
-                            {ev.registration_count ?? 0}/{ev.max_participants} inscriptos
-                          </span>
-                        </div>
-                        <p className="admin-day-item-meta">
-                          {ev.start_time} – {ev.end_time} hs
-                          {ev.event_type === 'meeting' ? ' · Reunión interna' : ' · Evento / taller'}
-                        </p>
-                        {ev.description ? <p className="admin-day-item-notes">{ev.description}</p> : null}
-                        {ev.participants?.length ? (
-                          <ul className="admin-participant-list admin-day-participants">
-                            {ev.participants.map((p, i) => (
-                              <li key={`${ev.id}-${i}`}>
-                                <strong>{p.name}</strong>
-                                {p.email ? (
-                                  <>
-                                    {' · '}
-                                    <a href={`mailto:${p.email}`}>{p.email}</a>
-                                  </>
-                                ) : null}
-                                {p.phone ? (
-                                  <>
-                                    {' · '}
-                                    <a href={`tel:${p.phone}`}>{p.phone}</a>
-                                  </>
-                                ) : null}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="admin-muted">Sin inscriptos todavía.</p>
-                        )}
-                        <div className="actions-inline admin-row-actions">
-                          <button type="button" className="btn btn-danger btn-icon" onClick={() => deleteEvent(ev.id)}>
-                            Eliminar
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <h3 className="admin-subtitle">Propuestas publicadas</h3>
+              <p className="admin-lead">En el sitio los visitantes votan cuáles les interesan más (no es inscripción).</p>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Horario</th>
+                      <th>Título</th>
+                      <th>Votos</th>
+                      <th>Detalle votos</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {eventsSorted.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="admin-empty">
+                          No hay eventos cargados.
+                        </td>
+                      </tr>
+                    ) : (
+                      eventsSorted.map((ev) => (
+                        <tr key={ev.id}>
+                          <td>{fmtDate(ev.event_date)}</td>
+                          <td>
+                            {ev.start_time} – {ev.end_time}
+                          </td>
+                          <td>{ev.title}</td>
+                          <td>
+                            <strong>{ev.vote_count ?? 0}</strong>
+                          </td>
+                          <td className="admin-participants-cell">
+                            {ev.voters?.length ? (
+                              <ul className="admin-participant-list">
+                                {ev.voters.map((v, i) => (
+                                  <li key={`${ev.id}-v-${i}`}>
+                                    <strong>{v.name}</strong>
+                                    {v.email ? ` · ${v.email}` : ''}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td>
+                            <button type="button" className="btn btn-danger btn-icon" onClick={() => deleteEvent(ev.id)}>
+                              Eliminar
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

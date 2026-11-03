@@ -39,6 +39,9 @@ git push -u origin main
 | `ADMIN_USER` | `admin` |
 | `ADMIN_PASS` | contraseña fuerte |
 | `ADMIN_JWT_SECRET` | texto largo aleatorio (opcional) |
+| `RESEND_API_KEY` | API key de [Resend](https://resend.com) (emails de reserva) |
+| `MAIL_FROM` | Remitente verificado en Resend |
+| `BOOKING_NOTIFY_EMAIL` | Aviso de nueva reserva (p. ej. `tomasrudilla@gmail.com`) |
 
 4. **Deploy**.
 

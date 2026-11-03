@@ -64,7 +64,7 @@ export function Experiencias() {
               Reservar sesión individual
             </Link>
             <Link to="/eventos" className="btn btn-secondary">
-              Ver eventos grupales
+              Votar eventos grupales
             </Link>
           </div>
         </div>

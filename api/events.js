@@ -1,13 +1,18 @@
 import { withDb } from '../lib/db.js';
 import { json } from '../lib/http.js';
 import { getGroupEventsForDate, datesWithGroupEventsInMonth } from '../lib/availability.js';
-import { getEventById } from '../lib/events.js';
+import { getEventById, listEventsForPoll } from '../lib/events.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return json(res, 405, { error: 'Método no permitido' });
 
   try {
-    const { month, date, id } = req.query || {};
+    const { month, date, id, poll } = req.query || {};
+
+    if (poll === '1' || poll === 'true') {
+      const events = await withDb((sql) => listEventsForPoll(sql));
+      return json(res, 200, { events });
+    }
 
     if (id) {
       const event = await withDb((sql) => getEventById(sql, Number(id)));
