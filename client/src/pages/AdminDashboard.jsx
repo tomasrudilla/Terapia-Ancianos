@@ -40,6 +40,38 @@ const TABS = [
   { id: 'blocks', label: 'Bloqueos' },
 ];
 
+function AdminConfirmDialog({ dialog, onCancel, onConfirm }) {
+  if (!dialog) return null;
+
+  return (
+    <div className="admin-modal-overlay" role="presentation" onClick={onCancel}>
+      <div
+        className="admin-modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="admin-confirm-title"
+        aria-describedby="admin-confirm-desc"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="admin-confirm-title" className="admin-modal-title">
+          {dialog.title}
+        </h3>
+        <p id="admin-confirm-desc" className="admin-modal-text">
+          {dialog.message}
+        </p>
+        <div className="admin-modal-actions">
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+          <button type="button" className="btn btn-danger" onClick={onConfirm}>
+            {dialog.confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AdminDashboard() {
   const token = getAdminToken();
   const [tab, setTab] = useState('overview');
@@ -50,11 +82,15 @@ export function AdminDashboard() {
   const [blocks, setBlocks] = useState([]);
   const [bookingCalView, setBookingCalView] = useState(() => monthStart(new Date()));
   const [regCalView, setRegCalView] = useState(() => monthStart(new Date()));
+  const [eventCalView, setEventCalView] = useState(() => monthStart(new Date()));
   const [selectedBookingDate, setSelectedBookingDate] = useState(null);
   const [selectedRegDate, setSelectedRegDate] = useState(null);
+  const [selectedEventDate, setSelectedEventDate] = useState(null);
+  const [eventFormDate, setEventFormDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const loadOverview = useCallback(async () => {
     const data = await apiGetAdmin('/api/admin/overview');
@@ -98,6 +134,31 @@ export function AdminDashboard() {
     refresh();
   }, [token, refresh]);
 
+  useEffect(() => {
+    if (!confirmDialog) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setConfirmDialog(null);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [confirmDialog]);
+
+  const openConfirm = (options) => {
+    setConfirmDialog({
+      title: options.title || 'Confirmar',
+      message: options.message,
+      confirmLabel: options.confirmLabel || 'Eliminar',
+      onConfirm: options.onConfirm,
+    });
+  };
+
+  const runConfirm = async () => {
+    if (!confirmDialog?.onConfirm) return;
+    const action = confirmDialog.onConfirm;
+    setConfirmDialog(null);
+    await action();
+  };
+
   const daysWithBookings = useMemo(() => {
     const set = new Set();
     bookings.forEach((b) => set.add(b.booking_date));
@@ -122,6 +183,19 @@ export function AdminDashboard() {
     return registrations.filter((r) => r.event_date === selectedRegDate);
   }, [registrations, selectedRegDate]);
 
+  const daysWithScheduledEvents = useMemo(() => {
+    const set = new Set();
+    events.forEach((ev) => set.add(ev.event_date));
+    return set;
+  }, [events]);
+
+  const eventsOnSelectedDay = useMemo(() => {
+    if (!selectedEventDate) return [];
+    return events
+      .filter((ev) => ev.event_date === selectedEventDate)
+      .sort((a, b) => a.start_time.localeCompare(b.start_time));
+  }, [events, selectedEventDate]);
+
   if (!token) return <Navigate to="/admin/login" replace />;
 
   const logout = () => {
@@ -135,11 +209,16 @@ export function AdminDashboard() {
     await Promise.all([loadBookings(), loadOverview()]);
   };
 
-  const deleteBooking = async (id) => {
-    if (!confirm('¿Eliminar esta reserva permanentemente?')) return;
-    await apiDelete('/api/admin/bookings', { id });
-    setMsg('Reserva eliminada');
-    await Promise.all([loadBookings(), loadOverview()]);
+  const deleteBooking = (id) => {
+    openConfirm({
+      title: 'Eliminar reserva',
+      message: '¿Eliminar esta reserva permanentemente?',
+      onConfirm: async () => {
+        await apiDelete('/api/admin/bookings', { id });
+        setMsg('Reserva eliminada');
+        await Promise.all([loadBookings(), loadOverview()]);
+      },
+    });
   };
 
   const submitEvent = async (e) => {
@@ -159,8 +238,15 @@ export function AdminDashboard() {
       },
       true,
     );
+    const createdDate = fd.get('event_date');
     setMsg('Evento creado');
     e.target.reset();
+    setEventFormDate('');
+    if (createdDate) {
+      setSelectedEventDate(String(createdDate));
+      const [y, m] = String(createdDate).split('-').map(Number);
+      setEventCalView(new Date(y, m - 1, 1));
+    }
     await Promise.all([loadEvents(), loadOverview(), loadRegistrations()]);
   };
 
@@ -192,6 +278,25 @@ export function AdminDashboard() {
     setSelectedRegDate(dateStr);
     const [y, m] = dateStr.split('-').map(Number);
     setRegCalView(new Date(y, m - 1, 1));
+  };
+
+  const pickEventDate = (dateStr) => {
+    setSelectedEventDate(dateStr);
+    setEventFormDate(dateStr);
+    const [y, m] = dateStr.split('-').map(Number);
+    setEventCalView(new Date(y, m - 1, 1));
+  };
+
+  const deleteEvent = (id) => {
+    openConfirm({
+      title: 'Eliminar evento',
+      message: '¿Eliminar evento e inscripciones?',
+      onConfirm: async () => {
+        await apiDelete('/api/admin/events', { id });
+        setMsg('Evento eliminado');
+        await Promise.all([loadEvents(), loadRegistrations(), loadOverview()]);
+      },
+    });
   };
 
   return (
@@ -425,7 +530,13 @@ export function AdminDashboard() {
                 <div className="form-row">
                   <div className="form-group">
                     <label>Fecha *</label>
-                    <input name="event_date" type="date" required />
+                    <input
+                      name="event_date"
+                      type="date"
+                      required
+                      value={eventFormDate}
+                      onChange={(e) => setEventFormDate(e.target.value)}
+                    />
                   </div>
                   <div className="form-group">
                     <label>Tipo</label>
@@ -461,73 +572,75 @@ export function AdminDashboard() {
                 </button>
               </form>
 
-              <h3 className="admin-subtitle">Listado de eventos</h3>
-              <div className="table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Horario</th>
-                      <th>Título</th>
-                      <th>Inscriptos</th>
-                      <th>Detalle inscriptos</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {events.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="admin-empty">
-                          No hay eventos cargados.
-                        </td>
-                      </tr>
-                    ) : (
-                      events.map((ev) => (
-                        <tr key={ev.id}>
-                          <td>{fmtDate(ev.event_date)}</td>
-                          <td>
-                            {ev.start_time} – {ev.end_time}
-                          </td>
-                          <td>{ev.title}</td>
-                          <td>
-                            <strong>
-                              {ev.registration_count ?? 0}/{ev.max_participants}
-                            </strong>
-                          </td>
-                          <td className="admin-participants-cell">
-                            {ev.participants?.length ? (
-                              <ul className="admin-participant-list">
-                                {ev.participants.map((p, i) => (
-                                  <li key={`${ev.id}-${i}`}>
-                                    <strong>{p.name}</strong>
-                                    {p.email ? ` · ${p.email}` : ''}
-                                    {p.phone ? ` · ${p.phone}` : ''}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              '—'
-                            )}
-                          </td>
-                          <td>
-                            <button
-                              type="button"
-                              className="btn btn-danger btn-icon"
-                              onClick={async () => {
-                                if (!confirm('¿Eliminar evento e inscripciones?')) return;
-                                await apiDelete('/api/admin/events', { id: ev.id });
-                                setMsg('Evento eliminado');
-                                await Promise.all([loadEvents(), loadRegistrations(), loadOverview()]);
-                              }}
-                            >
-                              Eliminar
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+              <h3 className="admin-subtitle">Calendario de eventos</h3>
+              <p className="admin-lead">Elegí un día para ver talleres y eventos. Al seleccionar una fecha también se completa el campo Fecha del formulario de arriba.</p>
+              <div className="admin-calendar-layout">
+                <div className="calendar-panel admin-calendar-panel">
+                  <MonthCalendar
+                    adminMode
+                    view={eventCalView}
+                    onPrev={() => setEventCalView(new Date(eventCalView.getFullYear(), eventCalView.getMonth() - 1, 1))}
+                    onNext={() => setEventCalView(new Date(eventCalView.getFullYear(), eventCalView.getMonth() + 1, 1))}
+                    daysWithEvents={daysWithScheduledEvents}
+                    selectedDate={selectedEventDate}
+                    onSelectDate={pickEventDate}
+                  />
+                  <p className="calendar-legend">
+                    <span className="legend-dot legend-event" /> Día con evento
+                  </p>
+                </div>
+                <div className="admin-day-detail">
+                  <h3 className="admin-subtitle">{selectedEventDate ? fmtDate(selectedEventDate) : 'Seleccioná un día'}</h3>
+                  {!selectedEventDate && <p className="admin-empty-inline">Marcá una fecha en el calendario.</p>}
+                  {selectedEventDate && eventsOnSelectedDay.length === 0 && (
+                    <p className="admin-empty-inline">No hay eventos este día.</p>
+                  )}
+                  <ul className="admin-day-list">
+                    {eventsOnSelectedDay.map((ev) => (
+                      <li key={ev.id} className="admin-day-item">
+                        <div className="admin-day-item-head">
+                          <strong>{ev.title}</strong>
+                          <span className="badge badge-confirmed">
+                            {ev.registration_count ?? 0}/{ev.max_participants} inscriptos
+                          </span>
+                        </div>
+                        <p className="admin-day-item-meta">
+                          {ev.start_time} – {ev.end_time} hs
+                          {ev.event_type === 'meeting' ? ' · Reunión interna' : ' · Evento / taller'}
+                        </p>
+                        {ev.description ? <p className="admin-day-item-notes">{ev.description}</p> : null}
+                        {ev.participants?.length ? (
+                          <ul className="admin-participant-list admin-day-participants">
+                            {ev.participants.map((p, i) => (
+                              <li key={`${ev.id}-${i}`}>
+                                <strong>{p.name}</strong>
+                                {p.email ? (
+                                  <>
+                                    {' · '}
+                                    <a href={`mailto:${p.email}`}>{p.email}</a>
+                                  </>
+                                ) : null}
+                                {p.phone ? (
+                                  <>
+                                    {' · '}
+                                    <a href={`tel:${p.phone}`}>{p.phone}</a>
+                                  </>
+                                ) : null}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="admin-muted">Sin inscriptos todavía.</p>
+                        )}
+                        <div className="actions-inline admin-row-actions">
+                          <button type="button" className="btn btn-danger btn-icon" onClick={() => deleteEvent(ev.id)}>
+                            Eliminar
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           )}
@@ -611,6 +724,12 @@ export function AdminDashboard() {
           )}
         </div>
       </div>
+
+      <AdminConfirmDialog
+        dialog={confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={runConfirm}
+      />
     </div>
   );
 }
