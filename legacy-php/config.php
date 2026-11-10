@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-define('APP_NAME', 'Espacio Calma');
+define('APP_NAME', 'Gerontología y Familia');
 define('APP_TAGLINE', 'Acompañamiento terapéutico para adultos mayores');
 
 // En Vercel: configurá ADMIN_USER y ADMIN_PASS en Environment Variables

@@ -126,7 +126,7 @@ export function Reservar() {
   return (
     <main>
       <div className="page-hero container">
-        <h1>Reservar terapia individual</h1>
+        <h1>Reserva de sesión individual online</h1>
         <p>Elegí un día y horario disponible. La sesión dura 60 minutos.</p>
       </div>
 

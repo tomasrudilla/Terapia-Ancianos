@@ -43,7 +43,7 @@ git push -u origin main
 | `SMTP_PORT` | `587` (Gmail) |
 | `SMTP_USER` | Cuenta que envía (p. ej. Gmail) |
 | `SMTP_PASS` | Contraseña de aplicación (no la clave normal de Gmail) |
-| `MAIL_FROM` | Opcional: `Espacio Calma <tu@gmail.com>` |
+| `MAIL_FROM` | Opcional: `Gerontología y Familia <tu@gmail.com>` |
 | `BOOKING_NOTIFY_EMAIL` | Aviso de nueva reserva (p. ej. `tomasrudilla@gmail.com`) |
 
 4. **Deploy**.

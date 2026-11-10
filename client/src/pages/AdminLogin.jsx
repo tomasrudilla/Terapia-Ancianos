@@ -25,7 +25,7 @@ export function AdminLogin() {
       <div className="login-page">
         <div className="login-card">
           <p className="admin-badge">Panel administrador</p>
-          <h1>Espacio Calma</h1>
+          <h1>Gerontología y Familia</h1>
           <p className="subtitle">Reservas individuales, eventos grupales y bloqueos de agenda</p>
           {error && <div className="alert alert-error">{error}</div>}
           <form onSubmit={submit}>

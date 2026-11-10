@@ -86,7 +86,7 @@ export function Nav() {
           </Link>
           <Link to="/" className="logo" onClick={closeMenu}>
             <span className="logo-mark" aria-hidden="true" />
-            <span>Espacio Calma</span>
+            <span>Gerontología y Familia</span>
           </Link>
         </div>
 

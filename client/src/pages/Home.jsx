@@ -93,20 +93,24 @@ export function Home() {
 
       <section className="section" id="sobre-mi">
         <div className="container about-grid">
-          <div className="about-image">
-            <img
-              src="/assets/img/romina-sobre-mi.jpg"
-              alt="Romina Cruces, acompañante terapéutica"
-              width={768}
-              height={1024}
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
+          <figure className="about-figure">
+            <div className="about-image">
+              <img
+                src="/assets/img/romina-sobre-mi.jpg"
+                alt="Romina Cruces, acompañante terapéutica de adultos mayores"
+                width={768}
+                height={1024}
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <figcaption className="about-image-caption">Romina Cruces</figcaption>
+          </figure>
           <div className="about-content">
             <h2>Sobre mí...</h2>
             <p>
-              En los años trabajados para Discapacidad más la experiencia como Acompañante Terapéutica, siempre mi
+              En los años trabajados para Discapacidad más la experiencia como Acompañante Terapéutica de adultos
+              mayores, siempre mi
               pregunta era ¿quién cuida y guía a los familiares? ¿Quién los contiene? Me llenan de preguntas, que no
               saben cómo actuar o qué hacer con su familiar.
             </p>

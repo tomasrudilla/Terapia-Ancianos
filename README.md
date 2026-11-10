@@ -1,4 +1,4 @@
-# Espacio Calma — Terapia con adultos mayores
+# Gerontología y Familia — Terapia con adultos mayores
 
 Sitio **React** con reservas, eventos grupales, experiencias y panel admin.
 

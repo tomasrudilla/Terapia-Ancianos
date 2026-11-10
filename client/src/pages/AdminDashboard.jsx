@@ -34,8 +34,8 @@ function monthStart(d) {
 }
 
 const TABS = [
-  { id: 'new-event', label: 'Nuevo evento' },
-  { id: 'bookings', label: 'Reservas individuales' },
+  { id: 'new-event', label: 'Nuevo evento online' },
+  { id: 'bookings', label: 'Reservas individuales online' },
   { id: 'event-reservations', label: 'Votos eventos' },
   { id: 'blocks', label: 'Bloqueos' },
 ];
@@ -429,7 +429,7 @@ export function AdminDashboard() {
         <div className="container admin-header-inner">
           <Link to="/" className="logo admin-header-logo" title="Ir al sitio web">
             <span className="logo-mark" />
-            <span>Espacio Calma</span>
+            <span>Gerontología y Familia</span>
           </Link>
           <div className="admin-header-toolbar">
             <div className="admin-header-identity">
@@ -490,7 +490,7 @@ export function AdminDashboard() {
 
           {tab === 'bookings' && (
             <div className="admin-card">
-              <h2>Reservas de sesión individual</h2>
+              <h2>Reserva de sesión individual online</h2>
               <p className="admin-lead">Elegí un día en el calendario para ver los turnos reservados.</p>
               <div className="admin-calendar-layout">
                 <div className="calendar-panel admin-calendar-panel">
@@ -649,7 +649,7 @@ export function AdminDashboard() {
 
           {tab === 'new-event' && (
             <div className="admin-card">
-              <h2>Nuevo evento</h2>
+              <h2>Nuevo evento online</h2>
               <p className="admin-lead">Cargá una propuesta grupal. En el sitio se publica desde hoy en adelante para que la voten.</p>
               <form onSubmit={submitEvent} className="admin-form-section">
                 <div className="form-group">
