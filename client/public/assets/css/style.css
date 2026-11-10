@@ -420,6 +420,37 @@ a:hover {
   color: #fff;
 }
 
+.btn:disabled,
+.btn.is-processing {
+  cursor: wait;
+}
+
+.btn-primary:disabled,
+.btn-primary.is-processing {
+  opacity: 0.88;
+}
+
+.btn-primary.is-processing:hover,
+.btn-primary:disabled:hover {
+  transform: none;
+}
+
+.btn-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Hero */
 .hero {
   padding: 4.5rem 0 5rem;

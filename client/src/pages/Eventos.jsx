@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiGet, apiPost } from '../api';
+import { ProcessingButton } from '../components/ProcessingButton';
 
 function fmtEventDate(iso) {
   const [y, m, d] = iso.split('-').map(Number);
@@ -18,6 +19,7 @@ export function Eventos() {
   const [votingFor, setVotingFor] = useState(null);
   const [form, setForm] = useState({ voter_name: '', voter_email: '' });
   const [alert, setAlert] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const loadPoll = useCallback(async () => {
     setLoading(true);
@@ -39,23 +41,29 @@ export function Eventos() {
   };
 
   const closeVote = () => {
+    if (submitting) return;
     setVotingFor(null);
     setForm({ voter_name: '', voter_email: '' });
   };
 
   const submitVote = async (e) => {
     e.preventDefault();
-    if (!votingFor) return;
+    if (!votingFor || submitting) return;
+    setSubmitting(true);
+    setAlert(null);
     try {
       const data = await apiPost('/api/event-vote', {
         event_id: votingFor.id,
         ...form,
       });
       setAlert({ type: 'success', msg: data.message });
-      closeVote();
+      setVotingFor(null);
+      setForm({ voter_name: '', voter_email: '' });
       await loadPoll();
     } catch (err) {
       setAlert({ type: 'error', msg: err.message });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -124,7 +132,11 @@ export function Eventos() {
       </div>
 
       {votingFor && (
-        <div className="admin-modal-overlay" role="presentation" onClick={closeVote}>
+        <div
+          className="admin-modal-overlay"
+          role="presentation"
+          onClick={submitting ? undefined : closeVote}
+        >
           <div
             className="admin-modal event-vote-modal"
             role="dialog"
@@ -145,6 +157,7 @@ export function Eventos() {
                 <input
                   id="voter_name"
                   required
+                  disabled={submitting}
                   value={form.voter_name}
                   onChange={(e) => setForm({ ...form, voter_name: e.target.value })}
                 />
@@ -155,18 +168,19 @@ export function Eventos() {
                   id="voter_email"
                   type="email"
                   required
+                  disabled={submitting}
                   value={form.voter_email}
                   onChange={(e) => setForm({ ...form, voter_email: e.target.value })}
                 />
               </div>
               <p className="admin-modal-text event-vote-hint">Un voto por evento y email. No es una inscripción definitiva.</p>
               <div className="admin-modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={closeVote}>
+                <button type="button" className="btn btn-secondary" onClick={closeVote} disabled={submitting}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <ProcessingButton processing={submitting} processingLabel="Confirmando voto…">
                   Confirmar voto
-                </button>
+                </ProcessingButton>
               </div>
             </form>
           </div>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { MonthCalendar } from '../components/MonthCalendar';
 import { EventCard } from '../components/EventCard';
 import { apiGet, apiPost } from '../api';
+import { ProcessingButton } from '../components/ProcessingButton';
 
 function BookingSuccessModal({ message, detail, onClose }) {
   if (!message) return null;
@@ -53,6 +54,7 @@ export function Reservar() {
   const [alert, setAlert] = useState(null);
   const [successModal, setSuccessModal] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const monthKey = `${view.getFullYear()}-${String(view.getMonth() + 1).padStart(2, '0')}`;
 
@@ -101,7 +103,8 @@ export function Reservar() {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!selectedDate || !selectedTime) return;
+    if (!selectedDate || !selectedTime || submitting) return;
+    setSubmitting(true);
     try {
       const data = await apiPost('/api/book', {
         date: selectedDate,
@@ -120,6 +123,8 @@ export function Reservar() {
       if (selectedDate) await selectDate(selectedDate);
     } catch (err) {
       setAlert({ type: 'error', msg: err.message });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -203,6 +208,7 @@ export function Reservar() {
               <input
                 id="client_name"
                 required
+                disabled={submitting}
                 value={form.client_name}
                 onChange={(e) => setForm({ ...form, client_name: e.target.value })}
               />
@@ -213,6 +219,7 @@ export function Reservar() {
                 id="client_email"
                 type="email"
                 required
+                disabled={submitting}
                 value={form.client_email}
                 onChange={(e) => setForm({ ...form, client_email: e.target.value })}
               />
@@ -221,6 +228,7 @@ export function Reservar() {
               <label htmlFor="client_phone">Teléfono</label>
               <input
                 id="client_phone"
+                disabled={submitting}
                 value={form.client_phone}
                 onChange={(e) => setForm({ ...form, client_phone: e.target.value })}
               />
@@ -230,13 +238,19 @@ export function Reservar() {
               <textarea
                 id="notes"
                 rows={3}
+                disabled={submitting}
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-block" disabled={!selectedTime}>
+            <ProcessingButton
+              className="btn btn-primary btn-block"
+              disabled={!selectedTime}
+              processing={submitting}
+              processingLabel="Confirmando reserva…"
+            >
               Confirmar reserva
-            </button>
+            </ProcessingButton>
           </form>
         </aside>
       </div>
